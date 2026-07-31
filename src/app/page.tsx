@@ -54,6 +54,19 @@ export default function Home() {
           <ImageUploadZone />
         </div>
         <QuestionTypeSelector />
+        <label className="py-4 flex items-center gap-2 font-inter text-white">Number of Questions:
+          <select className="focus:outline-none border-1 border-white px-4 py-2">
+            <option value="">5</option>
+            <option value="">10</option>
+            <option value="">15</option>
+            <option value="">20</option>
+            <option value="">25</option>
+            <option value="">30</option>
+            <option value="">35</option>
+            <option value="">40</option>
+          </select>
+        </label>
+        <button></button>
       </section>
     </div>
   )
