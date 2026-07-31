@@ -1,4 +1,5 @@
 "use client"
+import FileDropzone from "./_components/FileDropZone";
 import NavBar from "./_components/NavBar";
 import { useState } from "react";
 
@@ -41,6 +42,9 @@ export default function Home() {
               </button>
             );
           })}
+        </div>
+        <div hidden={selectedOption !== "File"} className="py-4">
+          <FileDropzone />
         </div>
       </section>
     </div>
