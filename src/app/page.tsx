@@ -3,6 +3,7 @@ import FileDropzone from "./_components/FileDropZone";
 import ImageUploadZone from "./_components/ImageUploadZone";
 import NavBar from "./_components/NavBar";
 import { useState } from "react";
+import QuestionTypeSelector from "./_components/QuestionTypeSelector";
 
 type InputOption = 'File' | 'Text' | 'Image';
 
@@ -52,6 +53,7 @@ export default function Home() {
         <div hidden={selectedOption !== "Image"} className="py-4">
           <ImageUploadZone />
         </div>
+        <QuestionTypeSelector />
       </section>
     </div>
   )
