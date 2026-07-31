@@ -48,7 +48,7 @@ export default function FileDropzone() {
 
     if (selectedFile) {
         return (
-            <div className="flex items-center justify-between w-full p-4 border rounded-xl bg-slate-50 border-slate-200">
+            <div className="flex items-center justify-between w-full p-4 border rounded-xl bg-slate-50 border-slate-200 font-inter">
                 <div className="flex items-center gap-3 overflow-hidden max-w-54">
                     {/* Document Icon */}
                     <div className="flex-shrink-0 p-2 bg-white rounded-lg border border-slate-200 shadow-sm text-brand">
@@ -92,8 +92,8 @@ export default function FileDropzone() {
     return (
         <div
             className={`
-        flex flex-col items-center justify-center w-full px-6 py-10
-        border-2 border-dashed rounded-2xl transition-colors
+        flex flex-col items-center justify-center w-full px-14 py-10
+        border-2 border-dashed rounded-2xl transition-colors font-inter
         ${isDragging
                     ? 'border-brand bg-brand/5'
                     : 'border-slate-300 bg-white'
@@ -106,12 +106,12 @@ export default function FileDropzone() {
             <CloudUpload className='w-10 h-10' />
 
             {/* Main Text */}
-            <h3 className="text-sm font-semibold text-slate-700">
+            <h3 className="text-sm font-semibold text-slate-700 text-center">
                 Choose a file or drag & drop it here
             </h3>
 
             {/* Sub Text */}
-            <p className="mt-1.5 text-xs text-slate-400">
+            <p className="mt-1.5 text-xs text-slate-400 text-center">
                 PDF, TXT and DOCX formats, up to 5MB
             </p>
 
