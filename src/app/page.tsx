@@ -1,60 +1,48 @@
-export const dynamic = "force-dynamic";
+"use client"
+import NavBar from "./_components/NavBar";
+import { useState } from "react";
 
-export default async function Home() {
-  const { prisma } = await import("../lib/prisma");
-  const formatter = new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-  const users = await prisma.user
-    .findMany({
-      take: 10,
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
-    .catch(() => undefined);
+type InputOption = 'File' | 'Text' | 'Image';
+
+export default function Home() {
+
+  const [selectedOption, setSelectedOption] = useState<InputOption>('Text');
+
+  const options: InputOption[] = ['File', 'Text', 'Image'];
 
   return (
-    <main className="shell">
-      <div className="hero">
-        <p className="eyebrow">Next.js + Prisma 7</p>
-        <h1>Users from your database, loaded on the server.</h1>
-        <p className="lede">
-          This page reads from <code>src/app/page.tsx</code> using the Prisma instance in{" "}
-          <code>src/lib/prisma.ts</code>.
-        </p>
-      </div>
-
-      <section className="panel">
-        <div className="panelHeader">
-          <h2>Seeded users</h2>
-          <span>{users?.length ?? 0} total</span>
+    <div>
+      <NavBar />
+      {/* Hero Section */}
+      <section className="bg-dark py-2 px-6 flex flex-col items-center">
+        <div className="py-12 text-white">
+          <h1 className="text-4xl text-center">Turn Any Text Into an Assessment in Seconds</h1>
+          <p className="text-lg text-center">Paste your source material, and Quizmatic’s AI instantly generates accurate, gamified multiple-choice questions. Stop writing trivia by hand.</p>
         </div>
+        {/* The Segmented Control Container */}
+        <div className="flex w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white">
+          {options.map((option, index) => {
+            const isActive = selectedOption === option;
 
-        {!users ? (
-          <p className="empty">
-            Could not query users yet. Run <code>db:migrate</code>, then <code>db:seed</code>,
-            then refresh.
-          </p>
-        ) : users.length === 0 ? (
-          <p className="empty">No users yet. Run <code>db:seed</code> after your first migration.</p>
-        ) : (
-          <ul className="users">
-            {users.map((user) => (
-              <li key={user.id}>
-                <div>
-                  <strong>{user.name ?? "Unnamed user"}</strong>
-                  <p>{user.email}</p>
-                </div>
-                <time dateTime={user.createdAt.toISOString()}>
-                  {formatter.format(user.createdAt)}
-                </time>
-              </li>
-            ))}
-          </ul>
-        )}
+            return (
+              <button
+                key={option}
+                onClick={() => setSelectedOption(option)}
+                className={`
+                flex-1 py-2 px-4 text-sm font-semibold transition-colors
+                ${index !== options.length - 1 ? 'border-r border-slate-300' : ''}
+                ${isActive
+                    ? 'bg-[#4ce0a3]' // Matches the mint green from the image
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                  }
+              `}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
       </section>
-    </main>
-  );
+    </div>
+  )
 }

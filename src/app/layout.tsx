@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Orbitron } from "next/font/google"
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  // This generates a CSS variable named --font-orbitron
+  variable: "--font-orbitron",
+});
 
 export const metadata: Metadata = {
   title: "frontend",
@@ -12,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${orbitron.variable}`}>
       <body>{children}</body>
     </html>
   );
