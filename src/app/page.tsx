@@ -1,5 +1,6 @@
 "use client"
 import FileDropzone from "./_components/FileDropZone";
+import ImageUploadZone from "./_components/ImageUploadZone";
 import NavBar from "./_components/NavBar";
 import { useState } from "react";
 
@@ -12,16 +13,15 @@ export default function Home() {
   const options: InputOption[] = ['File', 'Text', 'Image'];
 
   return (
-    <div>
-      <NavBar />
+    <div className="pt-20">
       {/* Hero Section */}
       <section className="bg-dark py-2 px-6 flex flex-col items-center">
-        <div className="py-12 text-white">
+        <div className="py-12 text-white font-inter">
           <h1 className="text-4xl text-center">Turn Any Text Into an Assessment in Seconds</h1>
-          <p className="text-lg text-center">Paste your source material, and Quizmatic’s AI instantly generates accurate, gamified multiple-choice questions. Stop writing trivia by hand.</p>
+          <p className="text-lg text-center">Paste your source material, and Quizify instantly generates accurate, gamified multiple-choice questions.</p>
         </div>
         {/* The Segmented Control Container */}
-        <div className="flex w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white">
+        <div className="flex w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
           {options.map((option, index) => {
             const isActive = selectedOption === option;
 
@@ -45,6 +45,12 @@ export default function Home() {
         </div>
         <div hidden={selectedOption !== "File"} className="py-4">
           <FileDropzone />
+        </div>
+        <div hidden={selectedOption !== "Text"} className="py-4">
+          <textarea placeholder="Enter text here..." className="w-84 h-54 border-1 border-white rounded-md focus:outline-none p-2 text-white"></textarea>
+        </div>
+        <div hidden={selectedOption !== "Image"} className="py-4">
+          <ImageUploadZone />
         </div>
       </section>
     </div>
