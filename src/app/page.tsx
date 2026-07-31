@@ -10,8 +10,10 @@ type InputOption = 'File' | 'Text' | 'Image';
 export default function Home() {
 
   const [selectedOption, setSelectedOption] = useState<InputOption>('Text');
-
   const options: InputOption[] = ['File', 'Text', 'Image'];
+
+  const displaySelections = () => {
+  }
 
   return (
     <div className="pt-20">
@@ -54,8 +56,9 @@ export default function Home() {
           <ImageUploadZone />
         </div>
         <QuestionTypeSelector />
+        {/* Number of Questions */}
         <label className="py-4 flex items-center gap-2 font-inter text-white">Number of Questions:
-          <select className="focus:outline-none border-1 border-white px-4 py-2">
+          <select className="focus:outline-none border-1 border-white px-4 py-2 rounded-lg">
             <option value="">5</option>
             <option value="">10</option>
             <option value="">15</option>
@@ -66,7 +69,7 @@ export default function Home() {
             <option value="">40</option>
           </select>
         </label>
-        <button></button>
+        <button className="bg-mint py-4 w-full rounded-lg text-lg font-semibold">Generate Questions</button>
       </section>
     </div>
   )
