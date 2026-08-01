@@ -26,6 +26,7 @@ export default function Home() {
 
   const options: InputOption[] = ['File', 'Text', 'Image'];
 
+  //Data state
   const [quizData, setQuizData] = useState<QuizData | null>(null)
   const [selectedOption, setSelectedOption] = useState<InputOption>('Text');
   const [selectedType, setSelectedType] = useState<QuizType>("Multiple Choice")
@@ -34,10 +35,49 @@ export default function Home() {
   const [debouncedText, setDebouncedText] = useState("")
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [questionCount, setQuestionCount] = useState("5");
+
+  //Modal state
   const [isOpen, setIsOpen] = useState(false);
+
+  //Generation status state
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  //Progress simulator
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isGenerating) {
+      setProgress(0);
+      setStatusText("Analyzing source material...");
+
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          // Cap the fake progress at 95% until the actual response arrives
+          if (prev >= 95) return prev;
+
+          // Update the text to make it feel like real steps are happening
+          if (prev === 30) setStatusText("Structuring questions...");
+          if (prev === 60) setStatusText("Validating correct answers...");
+          if (prev === 85) setStatusText("Finalizing formatting...");
+
+          // Increment by a random small amount for a natural, staggered feel
+          return prev + Math.floor(Math.random() * 5) + 1;
+        });
+      }, 500); // Updates every half second
+    } else {
+      // Reset when generation finishes or fails
+      setProgress(0);
+      setStatusText("");
+    }
+
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   const generateQuiz = async () => {
     try {
+      setIsGenerating(true);
       const formData = new FormData()
 
       formData.append("quizType", selectedType)
@@ -63,8 +103,13 @@ export default function Home() {
       if (!response.ok) {
         throw new Error("Failed to generate quiz")
       } else {
-        setQuizData(await response.json())
-        setIsOpen(true)
+        const generatedData = await response.json();
+        setProgress(100);
+        setTimeout(() => {
+          setQuizData(generatedData);
+          setIsOpen(true);
+          setIsGenerating(false);
+        }, 400);
       }
 
     } catch (error) {
@@ -161,11 +206,54 @@ export default function Home() {
             <option value="40">40</option>
           </select>
         </label>
-        <button onClick={generateQuiz} className="bg-mint py-4 w-full rounded-lg text-lg font-semibold">Generate Questions</button>
+        {/* Generate Button */}
+        <button
+          onClick={generateQuiz}
+          disabled={isGenerating}
+          className={`
+            relative flex items-center justify-center gap-3 py-4 w-full rounded-lg text-lg font-semibold transition-colors mt-2
+            ${isGenerating
+              ? 'bg-slate-600 text-slate-300 cursor-not-allowed'
+              : 'bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900'
+            }
+          `}
+        >
+          {isGenerating && (
+            <svg
+              className="animate-spin h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          )}
+          {isGenerating ? 'Generating...' : 'Generate Questions'}
+        </button>
       </section>
       {quizData && isOpen && (
         <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} />
 
+      )}
+
+      {/* Loading Progress UI */}
+      {isGenerating && (
+        <div className="w-full mt-6 mb-2 font-inter">
+          <div className="flex justify-between text-sm text-slate-300 mb-2">
+            <span>{statusText}</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div
+              className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
       )}
     </div>
   )
