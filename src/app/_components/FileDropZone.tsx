@@ -3,10 +3,15 @@
 import { CloudUpload } from 'lucide-react';
 import { useState, useRef } from 'react';
 
-export default function FileDropzone() {
+interface FileDropZoneProps {
+    file: File | null,
+    handleUploadFile: (file: File) => void
+    handleRemoveFile: () => void
+}
+
+export default function FileDropzone({ file, handleUploadFile, handleRemoveFile }: FileDropZoneProps) {
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // Drag and Drop Event Handlers
     const handleDragOver = (e: React.DragEvent) => {
@@ -24,7 +29,7 @@ export default function FileDropzone() {
         setIsDragging(false);
 
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setSelectedFile(e.dataTransfer.files[0]);
+            handleUploadFile(e.dataTransfer.files[0]);
         }
     };
 
@@ -35,18 +40,18 @@ export default function FileDropzone() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setSelectedFile(e.target.files[0]);
+            handleUploadFile(e.target.files[0]);
         }
     };
 
     const clearFile = () => {
-        setSelectedFile(null);
+        handleRemoveFile();
         if (fileInputRef.current) {
             fileInputRef.current.value = ''; // Reset the hidden input
         }
     };
 
-    if (selectedFile) {
+    if (file) {
         return (
             <div className="flex items-center justify-between w-full p-4 border rounded-xl bg-slate-50 border-slate-200 font-inter">
                 <div className="flex items-center gap-3 overflow-hidden max-w-54">
@@ -63,7 +68,7 @@ export default function FileDropzone() {
 
                     {/* File Name */}
                     <span className="text-sm font-medium text-slate-700 truncate">
-                        {selectedFile.name}
+                        {file.name}
                     </span>
                 </div>
 
