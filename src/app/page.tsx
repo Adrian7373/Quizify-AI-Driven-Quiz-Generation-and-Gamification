@@ -234,26 +234,24 @@ export default function Home() {
           )}
           {isGenerating ? 'Generating...' : 'Generate Questions'}
         </button>
-      </section>
-      {quizData && isOpen && (
-        <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} />
 
-      )}
-
-      {/* Loading Progress UI */}
-      {isGenerating && (
-        <div className="w-full mt-6 mb-2 font-inter">
+        {/* Loading Progress UI */}
+        <div className="w-full mt-6 mb-2 font-inter bg-dark">
           <div className="flex justify-between text-sm text-slate-300 mb-2">
             <span>{statusText}</span>
             <span>{progress}%</span>
           </div>
-          <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+          <div className="w-full px-5 rounded-full h-2.5 overflow-hidden">
             <div
               className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
         </div>
+      </section>
+      {quizData && isOpen && (
+        <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} />
+
       )}
     </div>
   )
