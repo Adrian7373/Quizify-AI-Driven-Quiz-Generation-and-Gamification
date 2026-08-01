@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
+import { jsPDF } from 'jspdf';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -40,13 +43,6 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
         }));
     };
 
-    const handleDownload = (format: 'pdf' | 'docx' | 'txt') => {
-        console.log(`Downloading as ${format.toUpperCase()} (Answers included: ${includeAnswers})`);
-        setShowDownloadMenu(false);
-        // TODO: Implement actual generation libraries (like jspdf or docx) here
-        alert(`Triggering ${format.toUpperCase()} download...`);
-    };
-
     const handlePrint = () => {
         window.print();
     };
@@ -57,6 +53,193 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
             alert("Link copied to clipboard!");
         } catch (err) {
             console.error("Failed to copy link:", err);
+        }
+    };
+
+    // ==========================================
+    // 1. Text (.txt) Generator
+    // ==========================================
+    const generateTXT = () => {
+        let content = `${quizData.title.toUpperCase()}\n\n${quizData.description}\n\n`;
+        content += `=========================================\n\n`;
+
+        quizData.questions.forEach((q, index) => {
+            content += `${index + 1}. ${q.questionText}\n`;
+
+            if (q.options && q.options.length > 0) {
+                q.options.forEach((opt, optIndex) => {
+                    const letter = String.fromCharCode(65 + optIndex); // A, B, C, D
+                    content += `   ${letter}) ${opt}\n`;
+                });
+            }
+
+            if (includeAnswers) {
+                content += `\n   [Correct Answer]: ${q.correctAnswer}\n`;
+                content += `   [Explanation]: ${q.explanation}\n`;
+            }
+            content += `\n`;
+        });
+
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        saveAs(blob, `${quizData.title.replace(/\s+/g, '_')}.txt`);
+    };
+
+    // ==========================================
+    // 2. Word (.docx) Generator
+    // ==========================================
+    const generateDOCX = async () => {
+        const docChildren: any[] = [
+            new Paragraph({
+                children: [new TextRun({ text: quizData.title, bold: true, size: 32 })],
+                spacing: { after: 200 },
+            }),
+            new Paragraph({
+                children: [new TextRun({ text: quizData.description, size: 24 })],
+                spacing: { after: 400 },
+            }),
+        ];
+
+        quizData.questions.forEach((q, index) => {
+            // Question Text
+            docChildren.push(
+                new Paragraph({
+                    children: [new TextRun({ text: `${index + 1}. ${q.questionText}`, bold: true, size: 24 })],
+                    spacing: { before: 200, after: 100 },
+                })
+            );
+
+            // Options
+            if (q.options && q.options.length > 0) {
+                q.options.forEach((opt, optIndex) => {
+                    const letter = String.fromCharCode(65 + optIndex);
+                    docChildren.push(
+                        new Paragraph({
+                            children: [new TextRun({ text: `${letter}) ${opt}`, size: 24 })],
+                            indent: { left: 720 }, // Indent options
+                            spacing: { after: 50 },
+                        })
+                    );
+                });
+            }
+
+            // Answers
+            if (includeAnswers) {
+                docChildren.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "Correct Answer: ", bold: true, size: 24, color: "15803d" }),
+                            new TextRun({ text: q.correctAnswer, size: 24, color: "15803d" }),
+                        ],
+                        indent: { left: 720 },
+                        spacing: { before: 100 },
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: "Explanation: ", bold: true, size: 24, color: "15803d" }),
+                            new TextRun({ text: q.explanation, size: 24, color: "15803d" }),
+                        ],
+                        indent: { left: 720 },
+                        spacing: { after: 200 },
+                    })
+                );
+            }
+        });
+
+        const doc = new Document({ sections: [{ properties: {}, children: docChildren }] });
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, `${quizData.title.replace(/\s+/g, '_')}.docx`);
+    };
+
+    // ==========================================
+    // 3. PDF (.pdf) Generator
+    // ==========================================
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        const margin = 20;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const maxTextWidth = pageWidth - margin * 2;
+        let y = 20;
+
+        // Helper function to handle page breaks
+        const checkPageBreak = (addedHeight: number) => {
+            if (y + addedHeight > doc.internal.pageSize.getHeight() - margin) {
+                doc.addPage();
+                y = margin;
+            }
+        };
+
+        // Title & Description
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        const splitTitle = doc.splitTextToSize(quizData.title, maxTextWidth);
+        doc.text(splitTitle, margin, y);
+        y += splitTitle.length * 7 + 3;
+
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100);
+        const splitDesc = doc.splitTextToSize(quizData.description, maxTextWidth);
+        doc.text(splitDesc, margin, y);
+        y += splitDesc.length * 5 + 10;
+        doc.setTextColor(0);
+
+        // Questions Loop
+        quizData.questions.forEach((q, index) => {
+            checkPageBreak(20);
+
+            doc.setFont("helvetica", "bold");
+            const qText = `${index + 1}. ${q.questionText}`;
+            const splitQ = doc.splitTextToSize(qText, maxTextWidth);
+            doc.text(splitQ, margin, y);
+            y += splitQ.length * 6;
+
+            doc.setFont("helvetica", "normal");
+            if (q.options && q.options.length > 0) {
+                q.options.forEach((opt, optIndex) => {
+                    checkPageBreak(10);
+                    const letter = String.fromCharCode(65 + optIndex);
+                    const optText = doc.splitTextToSize(`${letter}) ${opt}`, maxTextWidth - 10);
+                    doc.text(optText, margin + 10, y);
+                    y += optText.length * 6;
+                });
+            } else {
+                y += 10; // Extra space for Identification answer line
+            }
+
+            if (includeAnswers) {
+                checkPageBreak(20);
+                doc.setTextColor(21, 128, 61); // Green color for answers
+                doc.setFont("helvetica", "bold");
+
+                const ansText = doc.splitTextToSize(`Answer: ${q.correctAnswer}`, maxTextWidth - 10);
+                doc.text(ansText, margin + 10, y);
+                y += ansText.length * 6;
+
+                doc.setFont("helvetica", "normal");
+                const expText = doc.splitTextToSize(`Explanation: ${q.explanation}`, maxTextWidth - 10);
+                doc.text(expText, margin + 10, y);
+                y += expText.length * 6;
+                doc.setTextColor(0); // Reset color
+            }
+            y += 10; // Space between questions
+        });
+
+        doc.save(`${quizData.title.replace(/\s+/g, '_')}.pdf`);
+    };
+
+    // ==========================================
+    // Master Download Handler
+    // ==========================================
+    const handleDownload = (format: 'pdf' | 'docx' | 'txt') => {
+        setShowDownloadMenu(false); // Close dropdown
+
+        try {
+            if (format === 'txt') generateTXT();
+            if (format === 'docx') generateDOCX();
+            if (format === 'pdf') generatePDF();
+        } catch (error) {
+            console.error(`Failed to generate ${format}:`, error);
+            alert(`An error occurred while generating your ${format.toUpperCase()} file.`);
         }
     };
 
@@ -177,7 +360,7 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                                                         key={optIdx}
                                                         onClick={() => handleAnswerSelect(index, option)}
                                                         className={`
-                              text-left p-4 rounded-lg border-2 transition-all print:border-slate-300
+                              text-left p-4 rounded-lg border-2 transition-all print:border-slate-300 duration-300
                               ${isSelected
                                                                 ? 'border-[#4ce0a3] bg-[#4ce0a3]/10 text-slate-900'
                                                                 : 'border-slate-200 hover:border-slate-300 text-slate-600'
