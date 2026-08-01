@@ -20,7 +20,10 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "@tailwindcss/postcss": "^4.3.3",
+    "docx": "^9.7.1",
     "dotenv": "^17.4.2",
+    "file-saver": "^2.0.5",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.28.0",
     "next": "16.2.9",
     "postcss": "^8.5.25",
@@ -31,6 +34,7 @@
   },
   "devDependencies": {
     "@prisma/compute-sdk": "latest",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^26.0.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
