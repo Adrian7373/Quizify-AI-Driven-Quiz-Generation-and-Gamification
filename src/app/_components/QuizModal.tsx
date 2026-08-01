@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react';
+import { useMediaQuery } from 'react-responsive';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -26,6 +27,9 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
     const [includeAnswers, setIncludeAnswers] = useState(false);
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+
+    const sm = useMediaQuery({ query: '(min-width: 640px)' })
+    const xsm = useMediaQuery({ query: '(min-width: 500px)' })
 
     if (!isOpen || !quizData) return null;
 
@@ -59,18 +63,12 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
     return (
         <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 font-sans overflow-hidden">
             {/* 1. TOP NAVIGATION BAR */}
-            <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 shadow-sm shrink-0">
-                <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-bold text-slate-800 truncate">
-                        {quizData.title}
-                    </h2>
-                    <p className="text-sm text-slate-500 truncate">{quizData.description}</p>
-                </div>
+            <header className="flex items-center justify-between px-6 py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0">
 
-                <div className="flex items-center gap-6 ml-4">
+                <div className="flex items-center gap-2 ml-4 flex-grow">
                     {/* Include Answers Toggle */}
                     <label className="flex items-center cursor-pointer gap-2 group print:hidden">
-                        <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">
+                        <span className="text-sm font-medium text-white group-hover:text-slate-900 transition-colors">
                             With Answers
                         </span>
                         <div className="relative">
@@ -80,7 +78,7 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                                 checked={includeAnswers}
                                 onChange={() => setIncludeAnswers(!includeAnswers)}
                             />
-                            <div className={`block w-11 h-6 rounded-full transition-colors ${includeAnswers ? 'bg-[#4ce0a3]' : 'bg-slate-200'}`}></div>
+                            <div className={`block w-11 h-6 rounded-full transition-colors ${includeAnswers ? 'bg-[#4ce0a3]' : 'bg-darker border-1 border-white'}`}></div>
                             <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${includeAnswers ? 'translate-x-5' : ''}`}></div>
                         </div>
                     </label>
@@ -94,7 +92,7 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Download
+                            {sm && "Download"}
                         </button>
 
                         {showDownloadMenu && (
@@ -112,7 +110,7 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                         className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors print:hidden"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        Print
+                        {xsm && "Print"}
                     </button>
 
                     {/* Share Button (Primary) */}
@@ -121,13 +119,13 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                         className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                        Share
+                        {xsm && "Share"}
                     </button>
 
                     {/* Close Modal (X) */}
                     <button
                         onClick={onClose}
-                        className="p-2 ml-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors print:hidden"
+                        className="p-2 ml-auto text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors print:hidden"
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
@@ -135,13 +133,15 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
             </header>
 
             {/* 2. MAIN CONTENT AREA (Scrollable) */}
-            <main className="flex-1 overflow-y-auto p-6 md:p-12 print:p-0 print:overflow-visible">
+            <main className="bg-lighter flex-1 overflow-y-auto p-6 md:p-12 print:p-0 print:overflow-visible">
                 <div className="max-w-4xl mx-auto space-y-8">
 
                     {/* Print-only Header */}
-                    <div className="hidden print:block mb-8 pb-4 border-b-2 border-slate-800">
-                        <h1 className="text-3xl font-bold text-black">{quizData.title}</h1>
-                        <p className="text-lg text-slate-700 mt-2">{quizData.description}</p>
+                    <div className="flex flex-col min-w-0">
+                        <h2 className="text-xl text-center font-bold text-slate-800 truncate">
+                            {quizData.title}
+                        </h2>
+                        <p className="text-sm text-center text-slate-500">{quizData.description}</p>
                     </div>
 
                     {/* Questions List */}
