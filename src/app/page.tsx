@@ -170,7 +170,7 @@ export default function Home() {
                 key={option}
                 onClick={() => setSelectedOption(option)}
                 className={`
-                flex-1 py-2 px-4 text-sm font-semibold transition-colors
+                flex-1 py-2 px-4 text-sm font-semibold transition-colors duration-300
                 ${index !== options.length - 1 ? 'border-r border-slate-300' : ''}
                 ${isActive
                     ? 'bg-[#4ce0a3]' // Matches the mint green from the image
@@ -236,18 +236,22 @@ export default function Home() {
         </button>
 
         {/* Loading Progress UI */}
-        <div className="w-full mt-6 mb-2 font-inter bg-dark">
-          <div className="flex justify-between text-sm text-slate-300 mb-2">
-            <span>{statusText}</span>
-            <span>{progress}%</span>
+        {isGenerating && (
+          <div className="w-full mt-6 mb-2 font-inter bg-dark">
+            <div className="flex justify-between text-sm text-slate-300 mb-2">
+              <span>{statusText}</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="w-full px-5 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="w-full px-5 rounded-full h-2.5 overflow-hidden">
-            <div
-              className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        </div>
+        )}
+
+
       </section>
       {quizData && isOpen && (
         <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} />
