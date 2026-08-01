@@ -2,9 +2,14 @@
 
 import { useState, useRef } from 'react';
 
-export default function ImageUploadZone() {
+interface ImageUploadZoneProps {
+    image: File | null,
+    handleUploadImage: (file: File) => void
+    handleRemoveImage: () => void
+}
+
+export default function ImageUploadZone({ image, handleUploadImage, handleRemoveImage }: ImageUploadZoneProps) {
     const [isDragging, setIsDragging] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -27,7 +32,7 @@ export default function ImageUploadZone() {
             const file = e.dataTransfer.files[0];
             // Only accept the drop if it's actually an image
             if (file.type.startsWith('image/')) {
-                setSelectedImage(file);
+                handleUploadImage(file);
             }
         }
     };
@@ -42,18 +47,18 @@ export default function ImageUploadZone() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setSelectedImage(e.target.files[0]);
+            handleUploadImage(e.target.files[0]);
         }
     };
 
     const clearImage = () => {
-        setSelectedImage(null);
+        handleRemoveImage();
         if (galleryInputRef.current) galleryInputRef.current.value = '';
         if (cameraInputRef.current) cameraInputRef.current.value = '';
     };
 
     // Success UI: Shown when an image is successfully selected
-    if (selectedImage) {
+    if (image) {
         return (
             <div className="flex items-center justify-between w-full p-4 border rounded-xl bg-slate-50 border-slate-200">
                 <div className="flex items-center gap-3 overflow-hidden max-w-54">
@@ -68,7 +73,7 @@ export default function ImageUploadZone() {
 
                     {/* File Name */}
                     <span className="text-sm font-medium text-slate-700 truncate">
-                        {selectedImage.name}
+                        {image.name}
                     </span>
                 </div>
 
