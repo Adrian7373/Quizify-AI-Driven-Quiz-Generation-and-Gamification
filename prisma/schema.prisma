@@ -7,33 +7,39 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  quizzes   Quiz[]
-  createdAt DateTime @default(now())
+// Define an Enum to lock down the exact types of quizzes allowed
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  IDENTIFICATION
 }
 
 model Quiz {
-  id          String     @id @default(cuid())
+  id          String     @id @default(uuid())
   title       String
-  description String?
-  authorId    String
-  author      User       @relation(fields: [authorId], references: [id])
-  questions   Question[]
+  description String
   createdAt   DateTime   @default(now())
+  
+  // A one-to-many relationship: One Quiz has many Questions
+  questions   Question[]
 }
 
 model Question {
-  id            String   @id @default(cuid())
+  id            String       @id @default(uuid())
   quizId        String
-  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  
+  // Categorize the question type using the Enum
+  type          QuestionType 
+  
   questionText  String
-  optionA       String
-  optionB       String
-  optionC       String
-  optionD       String
+  
+  // We use a JSON array to store options. 
+  // - Multiple Choice: ["A", "B", "C", "D"]
+  // - True/False: ["True", "False"]
+  // - Identification: [] (Empty array)
+  options       Json         @default("[]")
+  
   correctAnswer String
-  createdAt     DateTime @default(now())
+  explanation   String
 }
