@@ -7,39 +7,107 @@ datasource db {
   provider = "postgresql"
 }
 
-// Define an Enum to lock down the exact types of quizzes allowed
+enum Role {
+  TEACHER
+  STUDENT
+}
+
 enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
   IDENTIFICATION
+  FLASHCARD
+}
+
+enum GameMode {
+  LIVE          // Synchronous Kahoot style (Time-based multipliers)
+  ASYNC         // Homework style (Streaks)
+  FLASHCARD_STUDY // Solo reviewer mode
+}
+
+enum GameStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+}
+
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  name          String?
+  role          Role          @default(TEACHER)
+  
+  // Credit System (Cost Control)
+  aiCredits     Int           @default(10) // Free tier default balance
+  
+  quizzes       Quiz[]
+  hostedGames   GameSession[]
+  participantRecords Participant[] // Connects guest plays to an account if logged in
+  createdAt     DateTime      @default(now())
 }
 
 model Quiz {
-  id          String     @id @default(uuid())
+  id          String        @id @default(uuid())
   title       String
   description String
-  createdAt   DateTime   @default(now())
-  
-  // A one-to-many relationship: One Quiz has many Questions
+  creatorId   String
+  creator     User          @relation(fields: [creatorId], references: [id])
   questions   Question[]
+  sessions    GameSession[]
+  createdAt   DateTime      @default(now())
 }
 
 model Question {
   id            String       @id @default(uuid())
   quizId        String
   quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  
-  // Categorize the question type using the Enum
-  type          QuestionType 
-  
+  type          QuestionType @default(MULTIPLE_CHOICE)
   questionText  String
-  
-  // We use a JSON array to store options. 
-  // - Multiple Choice: ["A", "B", "C", "D"]
-  // - True/False: ["True", "False"]
-  // - Identification: [] (Empty array)
-  options       Json         @default("[]")
-  
+  options       Json         @default("[]") // Empty for Identification & Flashcard
   correctAnswer String
-  explanation   String
+  explanation   String       @default("")
+}
+
+model GameSession {
+  id                   String        @id @default(uuid())
+  joinCode             String        @unique // e.g. "849201"
+  quizId               String
+  quiz                 Quiz          @relation(fields: [quizId], references: [id])
+  hostId               String
+  host                 User          @relation(fields: [hostId], references: [id])
+  mode                 GameMode
+  status               GameStatus    @default(WAITING)
+  currentQuestionIndex Int           @default(0)
+  participants         Participant[]
+  createdAt            DateTime      @default(now())
+}
+
+model Participant {
+  id            String                @id @default(uuid())
+  sessionId     String
+  session       GameSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Optional link to account (null for anonymous guests)
+  userId        String?
+  user          User?                 @relation(fields: [userId], references: [id])
+  
+  nickname      String
+  totalScore    Int                   @default(0)
+  currentStreak Int                   @default(0) // Tracks consecutive correct answers in ASYNC mode
+  maxStreak     Int                   @default(0)
+  
+  responses     ParticipantResponse[]
+  joinedAt      DateTime              @default(now())
+}
+
+model ParticipantResponse {
+  id            String      @id @default(uuid())
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  questionId    String
+  answerGiven   String
+  isCorrect     Boolean
+  timeTakenMs   Int         // Used to calculate time multipliers in LIVE mode
+  pointsEarned  Int         @default(0)
+  createdAt     DateTime    @default(now())
 }
