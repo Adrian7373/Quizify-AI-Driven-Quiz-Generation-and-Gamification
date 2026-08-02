@@ -4,6 +4,7 @@ import ImageUploadZone from "./_components/ImageUploadZone";
 import { useEffect, useState } from "react";
 import QuizTypeSelector from "./_components/QuestionTypeSelector";
 import QuizModal from "./_components/QuizModal";
+import NavBar from "./_components/NavBar";
 
 type InputOption = 'File' | 'Text' | 'Image';
 export type QuizType = 'Multiple Choice' | 'True/False' | 'Identification';
@@ -154,6 +155,7 @@ export default function Home() {
 
   return (
     <div className="pt-20">
+      <NavBar />
       {/* Hero Section */}
       <section className="bg-dark py-2 px-6 flex flex-col items-center">
         <div className="py-12 text-white font-inter">
