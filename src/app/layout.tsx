@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Orbitron, Inter } from "next/font/google"
-import NavBar from "./_components/NavBar";
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -27,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${orbitron.variable} ${inter.variable}`}>
-      <body>      <NavBar />{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
