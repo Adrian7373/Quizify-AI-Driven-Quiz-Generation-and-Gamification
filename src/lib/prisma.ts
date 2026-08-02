@@ -1,18 +1,14 @@
-import "dotenv/config";
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const rawDatabaseUrl = process.env.DATABASE_URL;
-const databaseUrl = (rawDatabaseUrl ?? "").trim();
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
+// 1. Create a raw postgres pool using your pooled connection string
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-const adapter = new PrismaPg({
-  connectionString: databaseUrl,
-});
+// 2. Wrap it in the Prisma adapter
+const adapter = new PrismaPg(pool);
 
+// 3. Pass the adapter to PrismaClient
 const prisma = new PrismaClient({ adapter });
 
-export { prisma };
 export default prisma;
