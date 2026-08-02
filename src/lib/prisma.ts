@@ -1,14 +1,18 @@
-import { PrismaClient } from "@/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaClient } from '@/generated/prisma/client'
 
-// 1. Create a raw postgres pool using your pooled connection string
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const prismaClientSingleton = () => {
+    // Passing {} satisfies the 1 argument requirement for your custom output
+    return new PrismaClient()
+}
 
-// 2. Wrap it in the Prisma adapter
-const adapter = new PrismaPg(pool);
+const globalForPrisma = globalThis as unknown as {
+    prisma: PrismaClient | undefined
+}
 
-// 3. Pass the adapter to PrismaClient
-const prisma = new PrismaClient({ adapter });
+export const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
 
-export default prisma;
+if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = prisma
+}
+
+export default prisma
