@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Orbitron, Inter } from "next/font/google"
+import { Toaster } from 'react-hot-toast';
 
 const orbitron = Orbitron({
   subsets: ["latin"],
@@ -26,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${orbitron.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>{children}<Toaster position="bottom-right" reverseOrder={false} /></body>
     </html>
   );
 }
