@@ -4,7 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { FaFacebook } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
-import { signInWithProvider } from "./actions"; // Import both actions
+import { signInWithProvider, login } from "./actions"; // Import both actions
 
 export default function LoginPage() {
     const [isShowing, setIsShowing] = useState(false);
@@ -21,7 +21,7 @@ export default function LoginPage() {
                 </h1>
 
                 {/* 1. EMAIL & PASSWORD FORM */}
-                <form className="text-white flex flex-col gap-3">
+                <form action={login} className="text-white flex flex-col gap-3">
                     <label className="flex flex-col gap-1">
                         Email:
                         <input

@@ -5,10 +5,12 @@ import { useState } from "react";
 import { FaFacebook } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
 import Link from "next/link";
-import { signup, signInWithProvider } from "../login/actions"; // Adjust path if needed
+import { signUp } from "./actions"; // Adjust path if needed
+import { signInWithProvider } from "../login/actions";
 
 export default function SignupPage() {
     const [isShowing, setIsShowing] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<"TEACHER" | "STUDENT">("TEACHER");
 
     const handleToggleShow = () => {
         setIsShowing((prev) => !prev);
@@ -22,7 +24,7 @@ export default function SignupPage() {
                 </h1>
 
                 {/* 1. EMAIL & PASSWORD SIGNUP FORM */}
-                <form action={signup} className="text-white flex flex-col gap-3">
+                <form action={signUp} className="text-white flex flex-col gap-3">
                     <label className="flex flex-col gap-1">
                         Name:
                         <input
@@ -62,7 +64,29 @@ export default function SignupPage() {
                             </button>
                         </div>
                     </label>
-
+                    <input type="hidden" name="role" value={selectedRole} />
+                    <div className="flex border-1 border-white/40 items-center rounded-md">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRole("TEACHER")}
+                            className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${selectedRole === "TEACHER"
+                                ? "border-mint bg-mint/20 text-mint"
+                                : "border-white/40 bg-transparent text-white hover:border-mint/60 hover:text-mint"
+                                }`}
+                        >
+                            Teacher
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRole("STUDENT")}
+                            className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${selectedRole === "STUDENT"
+                                ? "border-mint bg-mint/20 text-mint"
+                                : "border-white/40 bg-transparent text-white hover:border-mint/60 hover:text-mint"
+                                }`}
+                        >
+                            Student
+                        </button>
+                    </div>
                     <button
                         type="submit"
                         className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors mt-4"
