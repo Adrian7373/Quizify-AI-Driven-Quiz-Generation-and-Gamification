@@ -7,6 +7,10 @@ import QuizModal from "./_components/QuizModal";
 import NavBar from "./_components/NavBar";
 import handleAnonymousGeneration from "./actions/generate";
 import fpPromise from '@fingerprintjs/fingerprintjs'
+import SignupModal from "./_components/SignUpModal";
+import { createClient } from "@/utils/supabase/client";
+import { getUser } from "./actions";
+import { handleAuthenticatedGeneration } from "./actions/generate";
 
 type InputOption = 'File' | 'Text' | 'Image';
 export type QuizType = 'Multiple Choice' | 'True/False' | 'Identification';
@@ -25,9 +29,17 @@ export interface QuizData {
   questions: Question[];
 }
 
+export type AppUser = {
+  id: string;
+  name: string | null;
+  role: string;
+  aiCredits: number;
+};
+
 export default function Home() {
 
   const options: InputOption[] = ['File', 'Text', 'Image'];
+  const supabase = createClient();
 
   //Data state
   const [quizData, setQuizData] = useState<QuizData | null>(null)
@@ -35,17 +47,35 @@ export default function Home() {
   const [selectedType, setSelectedType] = useState<QuizType>("Multiple Choice")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [textInput, setTextInput] = useState("");
-  const [debouncedText, setDebouncedText] = useState("")
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
   const [questionCount, setQuestionCount] = useState("5");
+  const [user, setUser] = useState<AppUser | null>(null)
+  const [isNoCredits, setIsNoCredits] = useState(false);
 
   //Modal state
   const [isOpen, setIsOpen] = useState(false);
+  const [isLimit, setIsLimit] = useState(false);
 
   //Generation status state
   const [progress, setProgress] = useState(0);
   const [statusText, setStatusText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false)
+
+  //Fetch user
+  useEffect(() => {
+    async function checkUser() {
+      // supabase.auth.getUser() securely verifies the session cookie
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const response = await getUser(user.id);
+        if (response.user) {
+          const user = response.user;
+          setUser(user);
+        }
+      }
+    }
+    checkUser()
+  }, [])
 
   //Progress simulator
   useEffect(() => {
@@ -95,6 +125,7 @@ export default function Home() {
         formData.append("image", uploadedImage);
       } else {
         alert("Please provide the required input material.");
+        setIsGenerating(false);
         return;
       }
 
@@ -102,24 +133,54 @@ export default function Home() {
       const result = await fp.get()
       const visitorId = result.visitorId
 
-      const response = await handleAnonymousGeneration(formData, visitorId);
+      if (user) {
 
-      if (response.error) {
-        if (response.reason === "limit") {
-          alert("Limit reached. Please sign up to generate more.")
+        const response = await handleAuthenticatedGeneration(formData, user.id)
+        console.log(response)
+
+        if (response.error) {
+          if (response.reason === "credits") {
+            setIsNoCredits(true);
+            setIsGenerating(false);
+          } else {
+            alert("Failed to generate quiz. Server error")
+          }
+
         } else {
-          alert("Failed to generate quiz. Server error")
+
+          const generatedData = await response.quizData;
+          setProgress(100);
+          setTimeout(() => {
+            setQuizData(generatedData);
+            setIsOpen(true);
+            setIsGenerating(false);
+          }, 400);
         }
 
       } else {
-        const generatedData = await response.quizData;
-        setProgress(100);
-        setTimeout(() => {
-          setQuizData(generatedData);
-          setIsOpen(true);
-          setIsGenerating(false);
-        }, 400);
+
+        const response = await handleAnonymousGeneration(formData, visitorId);
+
+        if (response.error) {
+          if (response.reason === "limit") {
+            setIsLimit(true);
+          } else {
+            alert("Failed to generate quiz. Server error")
+          }
+
+        } else {
+
+          const generatedData = await response.quizData;
+          setProgress(100);
+          setTimeout(() => {
+            setQuizData(generatedData);
+            setIsOpen(true);
+            setIsGenerating(false);
+          }, 400);
+        }
       }
+
+
 
     } catch (error) {
       throw new Error("Error generating quiz" + error)
@@ -153,17 +214,13 @@ export default function Home() {
     setSelectedType(type);
   }
 
-  useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      setDebouncedText(textInput)
-    }, 300);
-    return () => clearTimeout(debounceTimeout)
-  }, [textInput])
-
 
   return (
     <>
-      <NavBar />
+      <NavBar user={user} />
+      {isLimit && (
+        <SignupModal />
+      )}
       <div className="pt-20">
         {/* Hero Section */}
         <section className="bg-dark py-2 px-6 flex flex-col items-center">
@@ -220,9 +277,9 @@ export default function Home() {
           {/* Generate Button */}
           <button
             onClick={generateQuiz}
-            disabled={isGenerating}
+            disabled={isGenerating || (user ? user.aiCredits <= 0 : false)}
             className={`
-            relative flex items-center justify-center gap-3 py-4 w-full rounded-lg text-lg font-semibold transition-colors mt-2
+            relative flex disabled:bg-slate-600 disabled:text-slate-300 disabled:cursor-not-allowed items-center justify-center gap-3 py-4 w-full rounded-lg text-lg font-semibold transition-colors mt-2
             ${isGenerating
                 ? 'bg-slate-600 text-slate-300 cursor-not-allowed'
                 : 'bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900'
@@ -243,7 +300,11 @@ export default function Home() {
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
             )}
-            {isGenerating ? 'Generating...' : 'Generate Questions'}
+            {isGenerating
+              ? 'Generating...'
+              : user && user.aiCredits <= 0
+                ? 'Daily limit reached. Please try again later'
+                : 'Generate Questions'}
           </button>
 
           {/* Loading Progress UI */}
@@ -265,7 +326,7 @@ export default function Home() {
 
         </section>
         {quizData && isOpen && (
-          <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} />
+          <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
 
         )}
       </div>
