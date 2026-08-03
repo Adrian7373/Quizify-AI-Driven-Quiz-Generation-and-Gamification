@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, type KeyboardEvent } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
@@ -35,6 +35,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     const [includeAnswers, setIncludeAnswers] = useState(false);
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+    const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, string>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false)
 
@@ -48,6 +49,24 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
             ...prev,
             [questionIndex]: answer
         }));
+    };
+
+    const handleIdentificationAnswerSubmit = (questionIndex: number) => {
+        const trimmedAnswer = (userAnswers[questionIndex] || '').trim();
+
+        if (!trimmedAnswer) return;
+
+        setSubmittedAnswers(prev => ({
+            ...prev,
+            [questionIndex]: trimmedAnswer
+        }));
+    };
+
+    const handleIdentificationKeyDown = (event: KeyboardEvent<HTMLInputElement>, questionIndex: number) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            handleIdentificationAnswerSubmit(questionIndex);
+        }
     };
 
     const handlePrint = () => {
@@ -369,8 +388,12 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                     {quizData.questions.map((q, index) => {
                         const hasOptions = q.options && q.options.length > 0;
                         const isIdentification = !hasOptions;
-                        const hasSelection = typeof userAnswers[index] === 'string' && userAnswers[index].trim().length > 0;
-                        const isCorrect = hasSelection && userAnswers[index] === q.correctAnswer;
+                        const hasSelection = isIdentification
+                            ? typeof submittedAnswers[index] === 'string' && submittedAnswers[index].trim().length > 0
+                            : typeof userAnswers[index] === 'string' && userAnswers[index].trim().length > 0;
+                        const isCorrect = hasSelection && (isIdentification
+                            ? submittedAnswers[index] === q.correctAnswer
+                            : userAnswers[index] === q.correctAnswer);
                         const showFeedback = includeAnswers || hasSelection;
 
                         return (
@@ -385,13 +408,27 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                                 {/* Answer Inputs (Interactive) */}
                                 <div className="mt-6 ml-10">
                                     {isIdentification ? (
-                                        <input
-                                            type="text"
-                                            placeholder="Type your answer here..."
-                                            value={userAnswers[index] || ''}
-                                            onChange={(e) => handleAnswerSelect(index, e.target.value)}
-                                            className={`w-full max-w-md p-3 border-b-2 bg-slate-50 focus:bg-white outline-none transition-colors text-slate-700 print:border-b print:border-black print:bg-transparent ${hasSelection ? (isCorrect ? 'border-emerald-500' : 'border-rose-500') : 'border-slate-300 focus:border-[#4ce0a3]'}`}
-                                        />
+                                        <div className="w-full max-w-md">
+                                            <input
+                                                type="text"
+                                                placeholder="Type your answer here..."
+                                                value={userAnswers[index] || ''}
+                                                onChange={(e) => handleAnswerSelect(index, e.target.value)}
+                                                onBlur={() => handleIdentificationAnswerSubmit(index)}
+                                                onKeyDown={(e) => handleIdentificationKeyDown(e, index)}
+                                                className={`w-full p-3 border-b-2 bg-slate-50 focus:bg-white outline-none transition-colors text-slate-700 print:border-b print:border-black print:bg-transparent ${hasSelection ? (isCorrect ? 'border-emerald-500' : 'border-rose-500') : 'border-slate-300 focus:border-[#4ce0a3]'}`}
+                                            />
+                                            <div className="mt-2 flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleIdentificationAnswerSubmit(index)}
+                                                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+                                                >
+                                                    Check answer
+                                                </button>
+                                                <span className="text-xs text-slate-500">Press Enter or click check when you're done.</span>
+                                            </div>
+                                        </div>
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {q.options.map((option, optIdx) => {
