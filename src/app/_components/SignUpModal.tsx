@@ -10,6 +10,7 @@ import { signInWithProvider } from "../login/actions";
 
 export default function SignupModal() {
     const [isShowing, setIsShowing] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<"TEACHER" | "STUDENT">("TEACHER");
 
     const handleToggleShow = () => {
         setIsShowing((prev) => !prev);
@@ -63,6 +64,30 @@ export default function SignupModal() {
                             </button>
                         </div>
                     </label>
+
+                    <input type="hidden" name="role" value={selectedRole} />
+                    <div className="flex border border-white/40 items-center rounded-md overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRole("TEACHER")}
+                            className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${selectedRole === "TEACHER"
+                                ? "bg-mint/20 text-mint"
+                                : "bg-transparent text-white hover:bg-white/10"
+                                }`}
+                        >
+                            Teacher
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setSelectedRole("STUDENT")}
+                            className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${selectedRole === "STUDENT"
+                                ? "bg-mint/20 text-mint"
+                                : "bg-transparent text-white hover:bg-white/10"
+                                }`}
+                        >
+                            Student
+                        </button>
+                    </div>
 
                     <button
                         type="submit"
