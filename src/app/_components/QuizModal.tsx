@@ -5,6 +5,10 @@ import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
+import { Check, Save, SaveCheck } from 'lucide-react';
+import { AppUser } from '../page';
+import { saveQuiz } from '../actions';
+import toast from 'react-hot-toast';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -24,12 +28,15 @@ interface QuizModalProps {
     isOpen: boolean;
     onClose: () => void;
     quizData: QuizData | null;
+    user: AppUser | null
 }
 
-export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps) {
+export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModalProps) {
     const [includeAnswers, setIncludeAnswers] = useState(false);
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaved, setIsSaved] = useState(false)
 
     const sm = useMediaQuery({ query: '(min-width: 640px)' })
     const xsm = useMediaQuery({ query: '(min-width: 500px)' })
@@ -243,6 +250,22 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
         }
     };
 
+    const handleSave = async () => {
+        if (!user) return
+        setIsSaving(true)
+
+        const response = await saveQuiz(quizData, user.id)
+
+        if (response.error) {
+            toast.error("Failed to save quiz.")
+        } else {
+            toast.success("Quiz saved successfully!")
+            setIsSaved(true);
+            setIsSaving(false);
+        }
+
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 font-sans overflow-hidden">
             {/* 1. TOP NAVIGATION BAR */}
@@ -305,6 +328,21 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                         {xsm && "Share"}
                     </button>
 
+                    {/* Save Button (Primary) */}
+                    <button
+                        disabled={isSaving}
+                        onClick={handleSave}
+                        className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
+                    >
+                        {isSaved ? (
+                            <Check className='h-4' />
+                        ) : (
+                            <Save className='h-4' />
+                        )}
+
+                        {sm && (isSaved ? "Saved" : "Save")}
+                    </button>
+
                     {/* Close Modal (X) */}
                     <button
                         onClick={onClose}
@@ -331,6 +369,9 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                     {quizData.questions.map((q, index) => {
                         const hasOptions = q.options && q.options.length > 0;
                         const isIdentification = !hasOptions;
+                        const hasSelection = typeof userAnswers[index] === 'string' && userAnswers[index].trim().length > 0;
+                        const isCorrect = hasSelection && userAnswers[index] === q.correctAnswer;
+                        const showFeedback = includeAnswers || hasSelection;
 
                         return (
                             <div key={index} className="bg-white p-6 md:p-8 rounded-xl border border-slate-200 shadow-sm print:shadow-none print:border-none print:p-0 print:mb-8 break-inside-avoid">
@@ -349,23 +390,30 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                                             placeholder="Type your answer here..."
                                             value={userAnswers[index] || ''}
                                             onChange={(e) => handleAnswerSelect(index, e.target.value)}
-                                            className="w-full max-w-md p-3 border-b-2 border-slate-300 focus:border-[#4ce0a3] bg-slate-50 focus:bg-white outline-none transition-colors text-slate-700 print:border-b print:border-black print:bg-transparent"
+                                            className={`w-full max-w-md p-3 border-b-2 bg-slate-50 focus:bg-white outline-none transition-colors text-slate-700 print:border-b print:border-black print:bg-transparent ${hasSelection ? (isCorrect ? 'border-emerald-500' : 'border-rose-500') : 'border-slate-300 focus:border-[#4ce0a3]'}`}
                                         />
                                     ) : (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                             {q.options.map((option, optIdx) => {
                                                 const isSelected = userAnswers[index] === option;
+                                                const isCorrectAnswer = option === q.correctAnswer;
+                                                const optionClass = hasSelection
+                                                    ? isSelected && isCorrect
+                                                        ? 'border-[#4ce0a3] bg-[#4ce0a3]/10 text-slate-900'
+                                                        : isSelected && !isCorrect
+                                                            ? 'border-rose-500 bg-rose-50 text-slate-900'
+                                                            : isCorrectAnswer
+                                                                ? 'border-[#4ce0a3] bg-[#4ce0a3]/10 text-slate-900'
+                                                                : 'border-slate-200 hover:border-slate-300 text-slate-600'
+                                                    : isSelected
+                                                        ? 'border-[#4ce0a3] bg-[#4ce0a3]/10 text-slate-900'
+                                                        : 'border-slate-200 hover:border-slate-300 text-slate-600';
+
                                                 return (
                                                     <button
                                                         key={optIdx}
                                                         onClick={() => handleAnswerSelect(index, option)}
-                                                        className={`
-                              text-left p-4 rounded-lg border-2 transition-all print:border-slate-300 duration-300
-                              ${isSelected
-                                                                ? 'border-[#4ce0a3] bg-[#4ce0a3]/10 text-slate-900'
-                                                                : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                                                            }
-                            `}
+                                                        className={`text-left p-4 rounded-lg border-2 transition-all print:border-slate-300 duration-300 ${optionClass}`}
                                                     >
                                                         {option}
                                                     </button>
@@ -376,12 +424,17 @@ export default function QuizModal({ isOpen, onClose, quizData }: QuizModalProps)
                                 </div>
 
                                 {/* Conditional Answers Reveal (For Teachers/Reviewing) */}
-                                {includeAnswers && (
-                                    <div className="mt-6 ml-10 p-4 bg-amber-50 border border-amber-200 rounded-lg print:border-black print:bg-transparent">
-                                        <p className="text-sm font-bold text-amber-800 print:text-black">
-                                            Correct Answer: <span className="font-normal">{q.correctAnswer}</span>
+                                {showFeedback && (
+                                    <div className={`mt-6 ml-10 p-4 border rounded-lg print:border-black print:bg-transparent ${hasSelection ? (isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200') : 'bg-amber-50 border-amber-200'}`}>
+                                        <p className={`text-sm font-bold ${hasSelection ? (isCorrect ? 'text-emerald-800 print:text-black' : 'text-rose-800 print:text-black') : 'text-amber-800 print:text-black'}`}>
+                                            {hasSelection ? (isCorrect ? 'Correct!' : 'Not quite.') : 'Correct Answer:'} <span className="font-normal">{q.correctAnswer}</span>
                                         </p>
-                                        <p className="text-sm text-amber-700 mt-1 print:text-slate-700">
+                                        {hasSelection && (
+                                            <p className={`text-sm mt-1 ${isCorrect ? 'text-emerald-700 print:text-slate-700' : 'text-rose-700 print:text-slate-700'}`}>
+                                                <span className="font-semibold">Your answer:</span> {userAnswers[index]}
+                                            </p>
+                                        )}
+                                        <p className={`text-sm mt-1 ${hasSelection ? (isCorrect ? 'text-emerald-700 print:text-slate-700' : 'text-rose-700 print:text-slate-700') : 'text-amber-700 print:text-slate-700'}`}>
                                             <span className="font-semibold">Explanation:</span> {q.explanation}
                                         </p>
                                     </div>
