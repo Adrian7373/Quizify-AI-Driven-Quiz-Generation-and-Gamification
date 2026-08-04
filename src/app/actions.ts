@@ -62,3 +62,7 @@ export async function saveQuiz(quizData: QuizData, userId: string) {
         return { error: "Failed to save quiz." };
     }
 }
+
+export async function deleteQuiz(quizId: string) {
+    if (!quizId) return;
+}
