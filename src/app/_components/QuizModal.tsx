@@ -5,7 +5,7 @@ import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { Check, Save, SaveCheck } from 'lucide-react';
+import { Check, Save, SaveCheck, Trash } from 'lucide-react';
 import { AppUser } from '../page';
 import { saveQuiz } from '../actions';
 import toast from 'react-hot-toast';
@@ -359,21 +359,14 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                     </button>
 
                     {/* Save Button (Primary) */}
-                    {/*
-                    <button
-                        disabled={isSaving}
-                        onClick={handleSave}
-                        className="flex items-center gap-2 px-2 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
-                    >
-                        {isSaved ? (
-                            <Check className='h-4' />
-                        ) : (
-                            <Save className='h-4' />
-                        )}
 
-                        {sm && (isSaved ? "Saved" : "Save")}
+                    <button
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-900 bg-red-400 rounded-lg hover:bg-red-600 transition-colors print:hidden"
+                    >
+                        <Trash className='w-4 h-4' />
+
+                        {sm && (isSaved ? "Deleted" : "Delete")}
                     </button>
-                        */}
                     {/* Close Modal (X) */}
                     <button
                         onClick={onClose}
