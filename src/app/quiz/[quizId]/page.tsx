@@ -28,6 +28,7 @@ export default async function QuizPage({ params }: QuizPageProps) {
             creatorId: user?.id,
         },
         select: {
+            id: true,
             title: true,
             description: true,
             questions: true,
