@@ -5,11 +5,11 @@ import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { Check, Save, SaveCheck, Trash } from 'lucide-react';
+import { Trash } from 'lucide-react';
 import { AppUser } from '../page';
-import { saveQuiz } from '../actions';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { deleteQuiz } from '../actions';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -20,6 +20,7 @@ export interface Question {
 }
 
 export interface QuizData {
+    id?: string;
     title: string;
     description: string;
     questions: Question[];
@@ -280,11 +281,11 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
         }
     };
 
-    const handleSave = async () => {
+    const handleDelete = async () => {
         if (!user) return
         setIsSaving(true)
 
-        const response = await saveQuiz(quizData, user.id)
+        const response = await deleteQuiz(quizData.id)
 
         if (response.error) {
             toast.error("Failed to save quiz.")
