@@ -9,6 +9,7 @@ import { Check, Save, SaveCheck } from 'lucide-react';
 import { AppUser } from '../page';
 import { saveQuiz } from '../actions';
 import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -25,10 +26,10 @@ export interface QuizData {
 }
 
 interface QuizModalProps {
-    isOpen: boolean;
-    onClose: () => void;
+    isOpen?: boolean | null;
+    onClose?: () => void | null;
     quizData: QuizData | null;
-    user: AppUser | null
+    user?: AppUser | null
 }
 
 export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModalProps) {
@@ -38,6 +39,8 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, string>>({});
     const [isSaving, setIsSaving] = useState(false);
     const [isSaved, setIsSaved] = useState(false)
+
+    const router = useRouter();
 
     const sm = useMediaQuery({ query: '(min-width: 640px)' })
     const xsm = useMediaQuery({ query: '(min-width: 500px)' })
@@ -49,6 +52,14 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
             ...prev,
             [questionIndex]: answer
         }));
+    };
+
+    const handleClose = () => {
+        if (onClose) {
+            onClose(); // If on the home page, just swap the view back
+        } else {
+            router.push('/'); // If on a /quiz/[id] page, route back to home
+        }
     };
 
     const handleIdentificationAnswerSubmit = (questionIndex: number) => {
@@ -286,9 +297,9 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 font-sans overflow-hidden">
+        <div className="w-full h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans overflow-hidden">
             {/* 1. TOP NAVIGATION BAR */}
-            <header className="flex items-center justify-between px-6 py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0">
+            <header className="z-40 flex items-center justify-between px-3 py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0">
 
                 <div className="flex items-center gap-2 ml-4 flex-grow">
                     {/* Include Answers Toggle */}
@@ -341,17 +352,18 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                     {/* Share Button (Primary) */}
                     <button
                         onClick={handleShare}
-                        className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                         {xsm && "Share"}
                     </button>
 
                     {/* Save Button (Primary) */}
+                    {/*
                     <button
                         disabled={isSaving}
                         onClick={handleSave}
-                        className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
+                        className="flex items-center gap-2 px-2 py-2 text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden"
                     >
                         {isSaved ? (
                             <Check className='h-4' />
@@ -361,7 +373,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
 
                         {sm && (isSaved ? "Saved" : "Save")}
                     </button>
-
+                        */}
                     {/* Close Modal (X) */}
                     <button
                         onClick={onClose}
