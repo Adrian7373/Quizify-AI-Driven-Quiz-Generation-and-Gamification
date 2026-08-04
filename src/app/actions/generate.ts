@@ -1,6 +1,7 @@
 "use server"
 import prisma from "@/lib/prisma";
 import { waitForDatabaseConnection } from "@/lib/prisma-connection";
+import { Question } from "../_components/QuizModal";
 
 function getErrorCode(error: unknown): string | undefined {
     if (typeof error !== "object" || error === null) return undefined
@@ -196,6 +197,28 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         }
 
         const quizData = await flaskRes.json();
+
+        try {
+            const quiz = await prisma.quiz.create({
+                data: {
+                    title: quizData.title,
+                    description: quizData.description,
+                    creator: { connect: { id: userId } },
+                    questions: {
+                        create: quizData.questions.map((question: Question) => ({
+                            questionText: question.questionText,
+                            options: question.options,
+                            correctAnswer: question.correctAnswer,
+                            explanation: question.explanation,
+                        }))
+                    }
+                },
+            })
+
+        } catch (error) {
+            console.error("Failed to save quiz:", error);
+            return { error: "Failed to save quiz." };
+        }
 
         return { quizData }
 
