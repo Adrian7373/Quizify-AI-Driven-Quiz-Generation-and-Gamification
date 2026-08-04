@@ -24,6 +24,7 @@ export interface Question {
 }
 
 export interface QuizData {
+  id: string;
   title: string;
   description: string;
   questions: Question[];
