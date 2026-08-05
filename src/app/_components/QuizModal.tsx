@@ -5,7 +5,7 @@ import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { Trash } from 'lucide-react';
+import { CircleX, Trash } from 'lucide-react';
 import { AppUser } from '../page';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,7 @@ export interface QuizData {
     id?: string;
     title: string;
     description: string;
+    difficulty: string;
     questions: Question[];
 }
 
@@ -38,8 +39,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
     const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, string>>({});
-    const [isSaving, setIsSaving] = useState(false);
-    const [isSaved, setIsSaved] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const router = useRouter();
 
@@ -57,9 +57,9 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
 
     const handleClose = () => {
         if (onClose) {
-            onClose(); // If on the home page, just swap the view back
+            onClose();
         } else {
-            router.push('/'); // If on a /quiz/[id] page, route back to home
+            router.push('/');
         }
     };
 
@@ -283,16 +283,14 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
 
     const handleDelete = async () => {
         if (!user) return
-        setIsSaving(true)
 
-        const response = await deleteQuiz(quizData.id)
+        const response = await deleteQuiz(quizData.id || "", user.id)
 
-        if (response.error) {
-            toast.error("Failed to save quiz.")
+        if (response?.error) {
+            toast.error("Failed to delete quiz.")
         } else {
-            toast.success("Quiz saved successfully!")
-            setIsSaved(true);
-            setIsSaving(false);
+            toast.success("Quiz deleted successfully!")
+            setIsDeleting(false);
         }
 
     }
@@ -359,18 +357,19 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                         {xsm && "Share"}
                     </button>
 
-                    {/* Save Button (Primary) */}
+                    {/* Delete Button */}
 
                     <button
+                        onClick={() => setIsDeleting(true)}
                         className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-900 bg-red-400 rounded-lg hover:bg-red-600 transition-colors print:hidden"
                     >
                         <Trash className='w-4 h-4' />
 
-                        {sm && (isSaved ? "Deleted" : "Delete")}
+                        {sm && ("Delete")}
                     </button>
                     {/* Close Modal (X) */}
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="p-2 ml-auto text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors print:hidden"
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -388,6 +387,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                             {quizData.title}
                         </h2>
                         <p className="text-sm text-center text-slate-500">{quizData.description}</p>
+                        <p className={`font-semibold text-sm text-center ${quizData.difficulty === "easy" ? "text-green-500" : quizData.difficulty === "normal" ? "text-orange-500" : "text-red-500"}`}>Difficulty: {quizData.difficulty}</p>
                     </div>
 
                     {/* Questions List */}
@@ -487,6 +487,19 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                     })}
                 </div>
             </main>
+
+            {isDeleting && (
+                <div onClick={() => setIsDeleting(false)} className='bg-black/50 z-50 fixed inset-0 flex h-dvh items-center justify-center'>
+                    <div className='bg-white p-7 mx-8 flex flex-col items-center gap-2 rounded-md'>
+                        <p className='flex text-2xl items-center pr-2'><CircleX className='w-13 h-13 text-white pt-0.5' fill='red' />Delete Quiz?</p>
+                        <p>Are you sure you want to permanently delete this quiz?</p>
+                        <div className='flex gap-4'>
+                            <button onClick={() => setIsDeleting(false)} className='bg-slate-200 text-black text-2xl font-semibold px-4 py-2 rounded-md'>Cancel</button>
+                            <button className='bg-red-500 text-white text-2xl font-semibold px-4 py-2 rounded-md' onClick={handleDelete}>Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
