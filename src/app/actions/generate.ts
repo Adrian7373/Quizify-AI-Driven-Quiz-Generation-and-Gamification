@@ -68,11 +68,13 @@ export default async function handleAnonymousGeneration(formData: FormData, visi
         const quizType = formData.get("quizType") as string;
         const questionCount = formData.get("questionCount") as string;
         const inputType = formData.get("inputType") as string;
+        const difficulty = formData.get("difficulty") as string;
 
         const flaskFormData = new FormData();
         flaskFormData.append("quizType", quizType ?? "Multiple Choice");
         flaskFormData.append("questionCount", questionCount ?? "10");
         flaskFormData.append("inputType", inputType ?? "Text");
+        flaskFormData.append("difficulty", difficulty ?? "normal")
 
         if (inputType === "Text") {
             const text = formData.get("text");
@@ -152,11 +154,13 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         const quizType = formData.get("quizType") as string;
         const questionCount = formData.get("questionCount") as string;
         const inputType = formData.get("inputType") as string;
+        const difficulty = formData.get("difficulty") as string;
 
         const flaskFormData = new FormData();
         flaskFormData.append("quizType", quizType ?? "Multiple Choice");
         flaskFormData.append("questionCount", questionCount ?? "10");
         flaskFormData.append("inputType", inputType ?? "Text");
+        flaskFormData.append("difficulty", difficulty ?? "normal");
 
         if (inputType === "Text") {
             const text = formData.get("text");
@@ -204,6 +208,7 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
                     title: quizData.title,
                     description: quizData.description,
                     creator: { connect: { id: userId } },
+                    difficulty: quizData.difficulty,
                     questions: {
                         create: quizData.questions.map((question: Question) => ({
                             questionText: question.questionText,
