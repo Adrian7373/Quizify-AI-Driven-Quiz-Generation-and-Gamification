@@ -1,21 +1,12 @@
-"use client"
-import FileDropzone from "./_components/FileDropZone";
-import ImageUploadZone from "./_components/ImageUploadZone";
-import { useEffect, useState } from "react";
-import QuizTypeSelector from "./_components/QuestionTypeSelector";
-import QuizModal from "./_components/QuizModal";
-import NavBar from "./_components/NavBar";
-import handleAnonymousGeneration from "./actions/generate";
-import fpPromise from '@fingerprintjs/fingerprintjs'
-import SignupModal from "./_components/SignUpModal";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/utils/supabase/server";
 import { getUser } from "./actions";
-import { handleAuthenticatedGeneration } from "./actions/generate";
+import HomeClient from "./_components/HomeClient";
 
-type InputOption = 'File' | 'Text' | 'Image';
+// Export your types here so other components can still import them from "@/app/page"
+export type InputOption = 'File' | 'Text' | 'Image';
 export type QuizType = 'Multiple Choice' | 'True/False' | 'Identification';
+export type DifficultyType = "easy" | "normal" | "hard"
 
-// Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
   questionText: string;
   options: string[];
@@ -27,6 +18,7 @@ export interface QuizData {
   id: string;
   title: string;
   description: string;
+  difficulty: string;
   questions: Question[];
 }
 
@@ -44,310 +36,23 @@ export type AppUser = {
   quizzes: QuizInfo[]
 };
 
-export default function Home() {
+export default async function Home() {
+  // 1. Initialize the Server Client
+  const supabase = await createClient();
 
-  const options: InputOption[] = ['File', 'Text', 'Image'];
-  const supabase = createClient();
+  // 2. Fetch the session securely on the server
+  const { data: { user: authUser } } = await supabase.auth.getUser();
 
-  //Data state
-  const [quizData, setQuizData] = useState<QuizData | null>(null)
-  const [selectedOption, setSelectedOption] = useState<InputOption>('Text');
-  const [selectedType, setSelectedType] = useState<QuizType>("Multiple Choice")
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [textInput, setTextInput] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<File | null>(null)
-  const [questionCount, setQuestionCount] = useState("5");
-  const [user, setUser] = useState<AppUser | null>(null)
-  const [isNoCredits, setIsNoCredits] = useState(false);
+  let appUser: AppUser | null = null;
 
-  //Modal state
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLimit, setIsLimit] = useState(false);
-
-  //Generation status state
-  const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false)
-
-  //Fetch user
-  useEffect(() => {
-    async function checkUser() {
-      // supabase.auth.getUser() securely verifies the session cookie
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const response = await getUser(user.id);
-        if (response.user) {
-          const user = response.user;
-          setUser(user);
-        }
-      }
-    }
-    checkUser()
-  }, [])
-
-  //Progress simulator
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (isGenerating) {
-      setProgress(0);
-      setStatusText("Analyzing source material...");
-
-      interval = setInterval(() => {
-        setProgress((prev) => {
-          // Cap the fake progress at 95% until the actual response arrives
-          if (prev >= 95) return prev;
-
-          // Update the text to make it feel like real steps are happening
-          if (prev === 30) setStatusText("Structuring questions...");
-          if (prev === 60) setStatusText("Validating correct answers...");
-          if (prev === 85) setStatusText("Finalizing formatting...");
-
-          // Increment by a random small amount for a natural, staggered feel
-          return prev + Math.floor(Math.random() * 5) + 1;
-        });
-      }, 500); // Updates every half second
-    } else {
-      // Reset when generation finishes or fails
-      setProgress(0);
-      setStatusText("");
-    }
-
-    return () => clearInterval(interval);
-  }, [isGenerating]);
-
-  const generateQuiz = async () => {
-    try {
-      setIsGenerating(true);
-      const formData = new FormData()
-
-      formData.append("quizType", selectedType)
-      formData.append("questionCount", questionCount)
-      formData.append("inputType", selectedOption)
-
-      if (selectedOption === "Text" && textInput) {
-        formData.append("text", textInput);
-      } else if (selectedOption === "File" && uploadedFile) {
-        formData.append("file", uploadedFile);
-      } else if (selectedOption === "Image" && uploadedImage) {
-        formData.append("image", uploadedImage);
-      } else {
-        alert("Please provide the required input material.");
-        setIsGenerating(false);
-        return;
-      }
-
-      const fp = await fpPromise.load()
-      const result = await fp.get()
-      const visitorId = result.visitorId
-
-      if (user) {
-
-        const response = await handleAuthenticatedGeneration(formData, user.id)
-        console.log(response)
-
-        if (response.error) {
-          if (response.reason === "credits") {
-            setIsNoCredits(true);
-            setIsGenerating(false);
-          } else {
-            alert("Failed to generate quiz. Server error")
-          }
-
-        } else {
-
-          const generatedData = await response.quizData;
-          setProgress(100);
-          setTimeout(() => {
-            setQuizData(generatedData);
-            setIsOpen(true);
-            setIsGenerating(false);
-          }, 400);
-        }
-
-      } else {
-
-        const response = await handleAnonymousGeneration(formData, visitorId);
-
-        if (response.error) {
-          if (response.reason === "limit") {
-            setIsLimit(true);
-          } else {
-            alert("Failed to generate quiz. Server error")
-          }
-
-        } else {
-
-          const generatedData = await response.quizData;
-          setProgress(100);
-          setTimeout(() => {
-            setQuizData(generatedData);
-            setIsOpen(true);
-            setIsGenerating(false);
-          }, 400);
-        }
-      }
-
-
-
-    } catch (error) {
-      throw new Error("Error generating quiz" + error)
+  // 3. If they have a session, fetch their full database profile
+  if (authUser) {
+    const response = await getUser(authUser.id);
+    if (response.user) {
+      appUser = response.user;
     }
   }
 
-  const handleCloseModal = () => {
-    setIsOpen(false);
-  }
-
-  const handleRemoveImage = () => {
-    setUploadedImage(null)
-  }
-
-  const handleUploadImage = (file: File) => {
-    if (!file) return;
-    setUploadedImage(file)
-  }
-
-  const handleRemoveFile = () => {
-    setUploadedFile(null)
-  }
-
-  const handleUploadFile = (file: File) => {
-    if (!file) return;
-    setUploadedFile(file)
-  }
-
-  const handleSelectQuizType = (type: QuizType) => {
-    if (!type) return;
-    setSelectedType(type);
-  }
-
-  const hideModal = () => {
-    setIsLimit(false);
-  }
-
-  return (
-    <>
-      <NavBar user={user} />
-      {isLimit && (
-        <SignupModal onClose={hideModal} />
-      )}
-      <div className="pt-20 h-screen flex flex-col">
-
-        {/* VIEW SWAPPER: If quiz is open, show quiz. Otherwise, show generator. */}
-        {quizData && isOpen ? (
-          <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
-        ) : (
-          <section className="bg-dark py-2 px-6 flex flex-col items-center min-h-dvh">
-            <div className="py-7 text-white font-inter flex flex-col gap-2">
-              <h1 className="text-2xl text-center">Turn Any Text Into an Assessment in Seconds</h1>
-              <p className="text-md text-center">Paste your source material, and Quizify instantly generates accurate, gamified multiple-choice questions.</p>
-            </div>
-            {/* The Segmented Control Container */}
-            <div className="flex w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
-              {options.map((option, index) => {
-                const isActive = selectedOption === option;
-
-                return (
-                  <button
-                    key={option}
-                    onClick={() => setSelectedOption(option)}
-                    className={`
-                flex-1 py-2 px-4 text-sm font-semibold transition-colors duration-300
-                ${index !== options.length - 1 ? 'border-r border-slate-300' : ''}
-                ${isActive
-                        ? 'bg-[#4ce0a3]' // Matches the mint green from the image
-                        : 'bg-white text-slate-600 hover:bg-slate-50'
-                      }
-              `}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-            <div hidden={selectedOption !== "File"} className="py-4">
-              <FileDropzone handleRemoveFile={handleRemoveFile} file={uploadedFile} handleUploadFile={handleUploadFile} />
-            </div>
-            <div hidden={selectedOption !== "Text"} className="py-4">
-              <textarea value={textInput} onChange={(e) => setTextInput(e.target.value)} placeholder="Enter text here..." className="w-84 h-54 border-1 border-white rounded-md focus:outline-none p-2 text-white"></textarea>
-            </div>
-            <div hidden={selectedOption !== "Image"} className="py-4">
-              <ImageUploadZone image={uploadedImage} handleUploadImage={handleUploadImage} handleRemoveImage={handleRemoveImage} />
-            </div>
-            <QuizTypeSelector quizType={selectedType} handleTypeChange={handleSelectQuizType} />
-            {/* Number of Questions */}
-            <label className="py-4 flex items-center gap-2 font-inter text-white">Number of Questions:
-              <select value={questionCount} onChange={(e) => setQuestionCount(e.target.value)} className="focus:outline-none border-1 border-white px-4 py-2 rounded-lg">
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-                <option value="25">25</option>
-                <option value="30">30</option>
-                <option value="35">35</option>
-                <option value="40">40</option>
-              </select>
-            </label>
-            {/* Generate Button */}
-            <button
-              onClick={generateQuiz}
-              disabled={isGenerating || (user ? user.aiCredits <= 0 : false)}
-              className={`
-            relative flex disabled:bg-slate-600 z-30 disabled:text-slate-300 disabled:cursor-not-allowed items-center justify-center gap-3 py-4 w-full rounded-lg text-lg font-semibold transition-colors mt-2
-            ${isGenerating
-                  ? 'bg-slate-600 text-slate-300 cursor-not-allowed'
-                  : 'bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900'
-                }
-          `}
-            >
-              {isGenerating && (
-                <svg
-                  className="animate-spin h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-              )}
-              {isGenerating
-                ? 'Generating...'
-                : user && user.aiCredits <= 0
-                  ? 'Daily limit reached. Please try again later'
-                  : 'Generate Questions'}
-            </button>
-
-            {/* Loading Progress UI */}
-            {isGenerating && (
-              <div className="w-full mt-6 mb-2 font-inter bg-dark">
-                <div className="flex justify-between text-sm text-slate-300 mb-2">
-                  <span>{statusText}</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="w-full px-5 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-
-
-          </section>
-        )}
-        {/* Hero Section */}
-
-        {quizData && isOpen && (
-          <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
-
-        )}
-      </div>
-    </>
-  )
+  // 4. Pass the user down to the Client Component. No loading spinners required!
+  return <HomeClient initialUser={appUser} />;
 }
