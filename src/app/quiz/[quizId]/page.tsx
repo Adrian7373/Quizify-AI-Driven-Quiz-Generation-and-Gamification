@@ -2,7 +2,7 @@ import QuizModal, { QuizData } from "@/app/_components/QuizModal";
 import prisma from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import NavBar from "@/app/_components/NavBar";
-import { getUser } from "@/app/actions"; // Assuming you exported your user fetcher
+import { getUser } from "@/app/actions";
 
 interface QuizPageProps {
     params: Promise<{ quizId: string }>;
@@ -22,7 +22,7 @@ export default async function QuizPage({ params }: QuizPageProps) {
         }
     }
 
-    const quizData = await prisma.quiz.findFirst({
+    const quizData = await prisma.quiz.findUnique({
         where: {
             id: quizId,
             creatorId: user?.id,
@@ -32,6 +32,7 @@ export default async function QuizPage({ params }: QuizPageProps) {
             title: true,
             description: true,
             questions: true,
+            difficulty: true
         },
     });
 
@@ -39,10 +40,6 @@ export default async function QuizPage({ params }: QuizPageProps) {
         <>
             <NavBar user={appUser} />
             <div className="pt-20 h-screen flex flex-col">
-                {/* 
-                  Notice we don't pass onClose here. 
-                  This forces the QuizModal to use router.push('/') when they click the X! 
-                */}
                 <QuizModal isOpen={true} quizData={quizData as unknown as QuizData} user={appUser} />
             </div>
         </>
