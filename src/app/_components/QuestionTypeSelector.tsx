@@ -13,7 +13,7 @@ export default function QuizTypeSelector({ quizType, handleTypeChange }: Questio
     return (
         <>
             {/* The Segmented Control Container */}
-            <div className="flex w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
+            <div className="flex shrink-0 w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
                 {options.map((option, index) => {
                     const isActive = quizType === option;
 
