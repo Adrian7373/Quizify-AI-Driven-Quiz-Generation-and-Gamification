@@ -266,6 +266,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
                     <option value="40">40</option>
                   </select>
                 </label>
+
                 {/* Difficulty selector*/}
                 <label className="flex items-center gap-2 font-inter text-white text-sm">Difficulty:
                   <select value={difficulty} onChange={(e) => setDifficulty(e.target.value as DifficultyType)} className="focus:outline-none border-1 border-white px-4 py-2 rounded-lg">
