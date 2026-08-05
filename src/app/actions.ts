@@ -2,6 +2,8 @@
 
 import prisma from "@/lib/prisma"
 import { QuizData } from "./page";
+import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
 
 export async function getUser(userId: string) {
 
@@ -19,7 +21,8 @@ export async function getUser(userId: string) {
                     select: {
                         id: true,
                         title: true,
-                        description: true
+                        description: true,
+                        difficulty: true
                     }
                 }
             }
@@ -63,6 +66,39 @@ export async function saveQuiz(quizData: QuizData, userId: string) {
     }
 }
 
-export async function deleteQuiz(quizId: string) {
+export async function deleteQuiz(quizId: string, userId: string) {
     if (!quizId) return;
+
+    try {
+        const quizToDelete = await prisma.quiz.delete({
+            where: {
+                id: quizId,
+                creatorId: userId
+            }
+        })
+
+
+
+    } catch (error) {
+        console.log(error)
+        return { error: "Failed to delete quiz." }
+    }
+    redirect("/");
+}
+
+export async function logOutUser() {
+    try {
+        const supabase = await createClient()
+
+        const { error } = await supabase.auth.signOut();
+
+        if (error) {
+            return { error: "Failed to logout user" }
+        }
+
+        return { success: true };
+    } catch (err) {
+        return { error: "Failed to logout user" }
+    }
+
 }
