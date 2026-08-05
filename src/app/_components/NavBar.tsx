@@ -1,18 +1,39 @@
 "use client"
-import { CircleUserRound, Menu, PanelRightClose, Plus } from "lucide-react";
+import { CircleUserRound, Cog, LogOut, Menu, PanelRightClose, Plus } from "lucide-react";
 import Logo from "./Logo";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppUser } from "../page";
 import SignupModal from "./SignUpModal";
 import Link from "next/link";
+import { logOutUser } from "../actions";
+import toast from "react-hot-toast";
 
 interface NavBarProps {
     user: AppUser | null
+    onOpenLocalQuiz?: (quiz: any) => void
 }
 
-export default function NavBar({ user }: NavBarProps) {
+export default function NavBar({ user, onOpenLocalQuiz }: NavBarProps) {
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [isSigningIn, setIsSigningIn] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    // Loading state of logout
+    const [isPending, setIsPending] = useState(false);
+
+    const [localQuizzes, setLocalQuizzes] = useState<any[]>([]);
+
+    // Fetch from local storage when the component mounts
+    useEffect(() => {
+        if (!user) {
+            const savedQuizzes = localStorage.getItem('anon_quizzes');
+            if (savedQuizzes) {
+                setLocalQuizzes(JSON.parse(savedQuizzes));
+            }
+        }
+    }, [user, isOpen]);
 
     const toggleMenu = () => {
         setIsOpen((prev) => !prev)
@@ -22,9 +43,33 @@ export default function NavBar({ user }: NavBarProps) {
         setIsSigningIn((prev) => !prev)
     }
 
+    const toggleLogout = () => {
+        setIsLoggingOut((prev) => !prev)
+    }
+
+    const handleLogOut = async () => {
+        setIsPending(true);
+
+        const response = await logOutUser();
+
+        if (response?.error) {
+            toast.error("Failed to logout user. Server error")
+            setIsPending(false);
+            setIsLoggingOut(false);
+            return;
+        }
+
+        // Success: close modal, stop pending, refresh server components
+        setIsPending(false);
+        setIsLoggingOut(false);
+        toast.success("Logged out")
+        router.refresh();
+
+    }
+
     return (
         // FIX 1: Added z-50 here so the entire navbar sits above the button's z-30
-        <div className="fixed w-full bg-darker flex py-4 items-center justify-between px-4 z-50">
+        <div className="fixed w-full bg-darker flex py-4 items-center justify-between px-4 z-50 font-inter">
             <div className="flex gap-2 items-center">
                 <Menu onClick={toggleMenu} strokeWidth={3} className="w-10 h-10 text-white cursor-pointer" />
                 <Logo />
@@ -54,25 +99,45 @@ export default function NavBar({ user }: NavBarProps) {
                             <p className="text-gray-400 mb-2">Recent quizzes</p>
                             <hr />
                             <div className="flex flex-col h-80 overflow-y-auto text-white gap-3 py-3">
-                                {user?.quizzes.map((quiz) => (
-                                    <Link
-                                        key={quiz.id}
-                                        href={`/quiz/${quiz.id}`}
-                                        onClick={toggleMenu} // Automatically slide the menu closed when they click a quiz
-                                        className="flex items-center w-full px-3 py-2 text-sm text-slate-300 rounded-md hover:bg-slate-800 hover:text-white transition-colors group cursor-pointer"
-                                    >
-                                        <p className="truncate select-none">{quiz.title}</p>
-                                    </Link>
-                                ))}
+                                {user ? (
+                                    user.quizzes.map((quiz) => (
+                                        <Link
+                                            key={quiz.id}
+                                            href={`/quiz/${quiz.id}`}
+                                            onClick={toggleMenu}
+                                            className="flex items-center w-full px-3 py-2 text-sm text-slate-300 rounded-md hover:bg-slate-800 hover:text-white transition-colors group cursor-pointer"
+                                        >
+                                            <p className="truncate select-none">{quiz.title}</p>
+                                        </Link>
+                                    ))
+                                ) : (
+                                    localQuizzes.map((quiz) => (
+                                        <button
+                                            key={quiz.id}
+                                            onClick={() => {
+                                                toggleMenu();
+                                                if (onOpenLocalQuiz) onOpenLocalQuiz(quiz);
+                                            }}
+                                            className="flex items-center text-left w-full px-3 py-2 text-sm text-slate-300 rounded-md hover:bg-slate-800 hover:text-white transition-colors group cursor-pointer"
+                                        >
+                                            <p className="truncate select-none">{quiz.title}</p>
+                                        </button>
+                                    ))
+                                )}
                             </div>
                         </div>
                         {/* Account section */}
-                        <div className="flex items-center gap-2 mt-auto">
-                            <CircleUserRound className="w-8 h-8 text-white" />
-                            <div className="flex flex-col text-white">
-                                <p>{user?.name}</p>
-                                <p>{user?.role}</p>
+                        <div className="flex items-center justify-between px-2 mt-auto">
+                            <div className="flex items-center">
+                                <CircleUserRound className="w-8 h-8 text-white" />
+                                <div className="flex flex-col text-white">
+                                    <p>{user?.name}</p>
+                                    <p>{user?.role}</p>
+                                </div>
                             </div>
+                            {!!user && (
+                                <LogOut onClick={toggleLogout} className="text-red-400 cursor-pointer rounded-full w-8 h-8" />
+                            )}
                         </div>
                     </div>
 
@@ -82,6 +147,19 @@ export default function NavBar({ user }: NavBarProps) {
             </div>
             {isSigningIn && (
                 <SignupModal onClose={toggleSignIn} />
+            )}
+
+            {isLoggingOut && (
+                <div onClick={toggleLogout} className='bg-black/50 z-50 fixed inset-0 flex h-dvh items-center justify-center'>
+                    <div className='z-[60] bg-white p-7 mx-8 flex flex-col items-center gap-2 rounded-md'>
+                        <p className='flex text-2xl items-center pr-2'><LogOut className='w-8 h-8 pt-0.5 text-red-500' />Log out?</p>
+                        <p>Are you sure you want to log out?</p>
+                        <div className='flex gap-4'>
+                            <button onClick={toggleLogout} className='bg-slate-200 text-black text-2xl font-semibold px-4 py-2 rounded-md'>Cancel</button>
+                            <button className='bg-red-500 text-white text-2xl font-semibold px-4 py-2 rounded-md flex gap-2 items-center' onClick={handleLogOut}>{isPending && (<Cog className="animate-spin" />)}Confirm</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )
