@@ -5,11 +5,12 @@ import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { CircleX, Trash } from 'lucide-react';
+import { CalendarClock, Check, CircleX, Copy, Trash } from 'lucide-react';
 import { AppUser } from '../page';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { deleteQuiz } from '../actions';
+import { createAsyncSession } from '../actions/generate';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -40,6 +41,37 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
     const [submittedAnswers, setSubmittedAnswers] = useState<Record<number, string>>({});
     const [isDeleting, setIsDeleting] = useState(false);
+
+    //Create quiz async session states
+    const [isAssigning, setIsAssigning] = useState(false);
+    const [dueDate, setDueDate] = useState("");
+    const [generatedPin, setGeneratedPin] = useState("");
+    const [isCreatingSession, setIsCreatingSession] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
+
+    //Assignment handler
+    const handleCreateAssignment = async () => {
+        if (!user || !quizData?.id) return;
+        if (!dueDate) return toast.error("Please select a due date.");
+
+        setIsCreatingSession(true);
+        const response = await createAsyncSession(quizData.id, user.id, new Date(dueDate));
+
+        if (response.error) {
+            toast.error(response.error);
+        } else {
+            setGeneratedPin(response.session!.joinCode);
+            toast.success("Assignment created!");
+        }
+        setIsCreatingSession(false);
+    };
+
+    const handleCopyLink = async () => {
+        const joinLink = `${window.location.origin}/join?pin=${generatedPin}`;
+        await navigator.clipboard.writeText(joinLink);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
 
     const router = useRouter();
 
@@ -367,6 +399,17 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
 
                         {sm && ("Delete")}
                     </button>
+
+                    {user && quizData.id && (
+                        <button
+                            onClick={() => setIsAssigning(true)}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-slate-900 bg-amber-300 rounded-lg hover:bg-amber-400 transition-colors print:hidden"
+                        >
+                            <CalendarClock className='w-4 h-4' />
+                            {sm && "Assign"}
+                        </button>
+                    )}
+
                     {/* Close Modal (X) */}
                     <button
                         onClick={handleClose}
@@ -500,6 +543,80 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                     </div>
                 </div>
             )}
+
+            {/* Assignment Modal */}
+            {isAssigning && (
+                <div onClick={() => !generatedPin && setIsAssigning(false)} className='bg-black/50 z-50 fixed inset-0 flex h-dvh items-center justify-center'>
+                    <div onClick={(e) => e.stopPropagation()} className='z-[60] bg-white p-8 mx-4 flex flex-col items-center gap-4 rounded-xl shadow-2xl max-w-md w-full'>
+
+                        {!generatedPin ? (
+                            // View 1: Configuration Form
+                            <>
+                                <div className="bg-amber-100 p-3 rounded-full mb-2">
+                                    <CalendarClock className="w-8 h-8 text-amber-600" />
+                                </div>
+                                <h2 className='text-2xl font-bold text-slate-800'>Assign as Homework</h2>
+                                <p className='text-slate-500 text-center text-sm mb-2'>
+                                    Students can play at their own pace until the deadline.
+                                </p>
+
+                                <div className="w-full mb-4">
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Due Date & Time</label>
+                                    <input
+                                        type="datetime-local"
+                                        value={dueDate}
+                                        onChange={(e) => setDueDate(e.target.value)}
+                                        className="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:border-[#4ce0a3]"
+                                    />
+                                </div>
+
+                                <div className='flex gap-3 w-full mt-2'>
+                                    <button onClick={() => setIsAssigning(false)} className='flex-1 bg-slate-100 text-slate-700 font-semibold py-3 rounded-lg hover:bg-slate-200 transition'>Cancel</button>
+                                    <button
+                                        onClick={handleCreateAssignment}
+                                        disabled={isCreatingSession}
+                                        className='flex-1 bg-[#4ce0a3] text-slate-900 font-semibold py-3 rounded-lg hover:bg-[#3bc48b] transition flex justify-center items-center'
+                                    >
+                                        {isCreatingSession ? "Creating..." : "Create Link"}
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            // View 2: Generated PIN Result
+                            <>
+                                <h2 className='text-xl font-bold text-slate-800 text-center mb-2'>Assignment Ready!</h2>
+                                <p className='text-slate-500 text-center text-sm mb-4'>Share this PIN or link with your students.</p>
+
+                                <div className="bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl p-6 w-full text-center mb-2">
+                                    <p className="text-sm font-semibold text-slate-500 mb-1 tracking-widest uppercase">GAME PIN</p>
+                                    <p className="text-5xl font-black text-slate-900 tracking-widest">{generatedPin}</p>
+                                </div>
+
+                                <button
+                                    onClick={handleCopyLink}
+                                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold transition-colors ${isCopied ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-900 text-white hover:bg-slate-800'
+                                        }`}
+                                >
+                                    {isCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                                    {isCopied ? "Copied!" : "Copy Join Link"}
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setIsAssigning(false);
+                                        setGeneratedPin("");
+                                        setDueDate("");
+                                    }}
+                                    className="mt-2 text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors"
+                                >
+                                    Done
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
