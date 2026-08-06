@@ -1,8 +1,8 @@
 "use client"
-import { CircleUserRound, Cog, LogOut, Menu, PanelRightClose, Plus } from "lucide-react";
+import { CircleUserRound, Cog, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus } from "lucide-react";
 import Logo from "./Logo";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AppUser } from "../page";
 import SignupModal from "./SignUpModal";
 import Link from "next/link";
@@ -12,13 +12,16 @@ import toast from "react-hot-toast";
 interface NavBarProps {
     user: AppUser | null
     onOpenLocalQuiz?: (quiz: any) => void
+    activeQuizId?: string | null
 }
 
-export default function NavBar({ user, onOpenLocalQuiz }: NavBarProps) {
+export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarProps) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [isSigningIn, setIsSigningIn] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const pathname = usePathname();
 
     // Loading state of logout
     const [isPending, setIsPending] = useState(false);
@@ -95,34 +98,53 @@ export default function NavBar({ user, onOpenLocalQuiz }: NavBarProps) {
                             <PanelRightClose onClick={toggleMenu} className="-scale-x-100 w-6 h-6 text-white" />
                         </div>
                         <div className="text-white">
-                            <Link href="/" className="flex gap-2 w-full py-2 mb-4 hover:bg-slate-800 rounded-md px-2 cursor-pointer"><Plus />New quiz</Link>
-                            <p className="text-gray-400 mb-2">Recent quizzes</p>
+                            <div className="flex flex-col py-2 gap-2 mb-6">
+                                <Link href="/" className="flex gap-2 w-full py-2 hover:bg-slate-800 rounded-md px-2 cursor-pointer"><Plus />New quiz</Link>
+                                <Link href="/dashboard" className="flex gap-2 py-2 w-full hover:bg-slate-800 rounded-md px-2 cursor-pointer"><LayoutDashboard />Dashboard</Link>
+                            </div>
+                            <p className="text-gray-400 mb-2 text-sm">Recent quizzes</p>
                             <hr />
                             <div className="flex flex-col h-80 overflow-y-auto text-white gap-3 py-3">
                                 {user ? (
-                                    user.quizzes.map((quiz) => (
-                                        <Link
-                                            key={quiz.id}
-                                            href={`/quiz/${quiz.id}`}
-                                            onClick={toggleMenu}
-                                            className="flex items-center w-full px-3 py-2 text-sm text-slate-300 rounded-md hover:bg-slate-800 hover:text-white transition-colors group cursor-pointer"
-                                        >
-                                            <p className="truncate select-none">{quiz.title}</p>
-                                        </Link>
-                                    ))
+                                    user.quizzes.map((quiz) => {
+                                        // AUTHENTICATED CHECK: Does the URL match this quiz?
+                                        const isActive = pathname === `/quiz/${quiz.id}`;
+
+                                        return (
+                                            <Link
+                                                key={quiz.id}
+                                                href={`/quiz/${quiz.id}`}
+                                                onClick={toggleMenu}
+                                                className={`flex items-center w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 ${isActive
+                                                    ? 'bg-[#4ce0a3]/10 text-[#4ce0a3] border-[#4ce0a3] font-medium'
+                                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'
+                                                    }`}
+                                            >
+                                                <p className="truncate select-none">{quiz.title}</p>
+                                            </Link>
+                                        )
+                                    })
                                 ) : (
-                                    localQuizzes.map((quiz) => (
-                                        <button
-                                            key={quiz.id}
-                                            onClick={() => {
-                                                toggleMenu();
-                                                if (onOpenLocalQuiz) onOpenLocalQuiz(quiz);
-                                            }}
-                                            className="flex items-center text-left w-full px-3 py-2 text-sm text-slate-300 rounded-md hover:bg-slate-800 hover:text-white transition-colors group cursor-pointer"
-                                        >
-                                            <p className="truncate select-none">{quiz.title}</p>
-                                        </button>
-                                    ))
+                                    localQuizzes.map((quiz) => {
+                                        // ANONYMOUS CHECK: Does the open modal ID match this quiz?
+                                        const isActive = activeQuizId === quiz.id;
+
+                                        return (
+                                            <button
+                                                key={quiz.id}
+                                                onClick={() => {
+                                                    toggleMenu();
+                                                    if (onOpenLocalQuiz) onOpenLocalQuiz(quiz);
+                                                }}
+                                                className={`flex items-center text-left w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 ${isActive
+                                                    ? 'bg-[#4ce0a3]/10 text-[#4ce0a3] border-[#4ce0a3] font-medium'
+                                                    : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'
+                                                    }`}
+                                            >
+                                                <p className="truncate select-none">{quiz.title}</p>
+                                            </button>
+                                        )
+                                    })
                                 )}
                             </div>
                         </div>
