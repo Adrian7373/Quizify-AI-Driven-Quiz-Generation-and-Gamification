@@ -55,3 +55,29 @@ export async function submitAnswer(
     }
 }
 
+
+//Just in case a user gets disconnected. Also prevents duplicated quiz play.
+export async function getParticipantProgress(participantId: string) {
+    try {
+        const participant = await prisma.participant.findUnique({
+            where: { id: participantId },
+            include: {
+                responses: {
+                    select: { questionId: true } // We only need to know WHICH questions they answered
+                }
+            }
+        });
+
+        if (!participant) return { error: "Participant not found" };
+
+        return {
+            success: true,
+            answeredQuestionIds: participant.responses.map(r => r.questionId),
+            score: participant.totalScore,
+            streak: participant.currentStreak
+        };
+    } catch (error) {
+        console.error("Failed to fetch progress:", error);
+        return { error: "Failed to load progress." };
+    }
+}
