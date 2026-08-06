@@ -102,3 +102,27 @@ export async function logOutUser() {
     }
 
 }
+
+//For ending game sessions early
+export async function endSessionEarly(sessionId: string, hostId: string) {
+    try {
+        // 1. Verify ownership
+        const session = await prisma.gameSession.findUnique({
+            where: { id: sessionId }
+        });
+
+        if (!session) return { error: "Session not found." };
+        if (session.hostId !== hostId) return { error: "Unauthorized." };
+
+        // 2. Update status to FINISHED
+        await prisma.gameSession.update({
+            where: { id: sessionId },
+            data: { status: "FINISHED" }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to end session:", error);
+        return { error: "An error occurred while ending the session." };
+    }
+}
