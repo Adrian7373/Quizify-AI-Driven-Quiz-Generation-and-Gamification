@@ -8,9 +8,9 @@ import NavBar from "./NavBar";
 import handleAnonymousGeneration from "../actions/generate";
 import fpPromise from '@fingerprintjs/fingerprintjs'
 import SignupModal from "./SignUpModal";
-import { createClient } from "@/utils/supabase/client";
 import { handleAuthenticatedGeneration } from "../actions/generate";
 import { AppUser, InputOption, QuizData, QuizType, DifficultyType } from "../page";
+import { useRouter } from "next/navigation";
 
 interface HomeClientProps {
   initialUser: AppUser | null;
@@ -20,6 +20,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
   const options: InputOption[] = ['File', 'Text', 'Image'];
   const [user, setUser] = useState<AppUser | null>(initialUser);
+  const router = useRouter(); // Initialize router
 
   //Data state
   const [quizData, setQuizData] = useState<QuizData | null>(null)
@@ -120,6 +121,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
             setQuizData(generatedData);
             setIsOpen(true);
             setIsGenerating(false);
+            router.push(`/quiz/${generatedData.id}`);
           }, 400);
         }
 
@@ -149,7 +151,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
           setProgress(100);
           setTimeout(() => {
-            setQuizData(generatedData);
+            setQuizData(quizWithId);
             setIsOpen(true);
             setIsGenerating(false);
           }, 400);
@@ -201,7 +203,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
   return (
     <>
-      <NavBar user={user} onOpenLocalQuiz={handleOpenLocalQuiz} />
+      <NavBar user={user} onOpenLocalQuiz={handleOpenLocalQuiz} activeQuizId={quizData?.id} />
       {isLimit && (
         <SignupModal onClose={hideModal} />
       )}
@@ -252,7 +254,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
                   <ImageUploadZone image={uploadedImage} handleUploadImage={handleUploadImage} handleRemoveImage={handleRemoveImage} />
                 </div>
               </div>
-              <div className="flex gap-1 border-1 rounded-b-md border-white">
+              <div className="flex gap-1 border-1 rounded-b-md border-white px-2">
                 {/* Number of Questions */}
                 <label className="flex items-center gap-2 font-inter text-white text-sm"># of Questions:
                   <select value={questionCount} onChange={(e) => setQuestionCount(e.target.value)} className="focus:outline-none border-1 border-white px-4 py-2 rounded-lg">
@@ -280,6 +282,21 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
             <QuizTypeSelector quizType={selectedType} handleTypeChange={handleSelectQuizType} />
 
+            {/* Loading Progress UI */}
+            {isGenerating && (
+              <div className="w-full mt-6 mb-2 font-inter bg-dark">
+                <div className="flex justify-between text-sm text-slate-300 mb-2">
+                  <span>{statusText}</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full px-5 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
 
             {/* Generate Button */}
             <button
@@ -313,22 +330,6 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
                   ? 'Daily limit reached. Please try again later'
                   : 'Generate Questions'}
             </button>
-
-            {/* Loading Progress UI */}
-            {isGenerating && (
-              <div className="w-full mt-6 mb-2 font-inter bg-dark">
-                <div className="flex justify-between text-sm text-slate-300 mb-2">
-                  <span>{statusText}</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="w-full px-5 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-[#4ce0a3] h-2.5 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
 
 
           </section>
