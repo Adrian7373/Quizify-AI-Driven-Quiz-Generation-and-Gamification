@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { submitAnswer } from "../actions";
 import { Loader2, Flame, Trophy } from "lucide-react";
 import toast from "react-hot-toast";
+import { getParticipantProgress } from "../actions";
 
 interface AsyncPlayerProps {
     sessionId: string;
@@ -15,6 +16,7 @@ interface AsyncPlayerProps {
 export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPlayerProps) {
     const router = useRouter();
     const [participantId, setParticipantId] = useState<string | null>(null);
+    const [isLoadingProgress, setIsLoadingProgress] = useState(true);
 
     // Game State
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,6 +28,50 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [isRevealed, setIsRevealed] = useState(false);
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+
+
+    useEffect(() => {
+        async function initPlayer() {
+            const storedId = localStorage.getItem(`participant_${sessionId}`);
+            if (!storedId) {
+                toast.error("You need to join the game first!");
+                router.push("/join");
+                return;
+            }
+
+            setParticipantId(storedId);
+
+            // Fetch their progress from the database
+            const progress = await getParticipantProgress(storedId);
+
+            if (progress.error) {
+                toast.error(progress.error);
+                router.push("/join");
+                return;
+            }
+
+            // Sync the local score and streak
+            setScore(progress.score || 0);
+            setStreak(progress.streak || 0);
+
+            // Fast-forward to the first unanswered question
+            if (progress.answeredQuestionIds && progress.answeredQuestionIds.length > 0) {
+                // Because you used array index as questionId in submitAnswer ("0", "1", etc)
+                // The length of answered questions is perfectly equivalent to the next index!
+                const nextUnansweredIndex = progress.answeredQuestionIds.length;
+
+                if (nextUnansweredIndex >= questions.length) {
+                    setIsFinished(true); // They already finished the quiz!
+                } else {
+                    setCurrentIndex(nextUnansweredIndex);
+                }
+            }
+
+            setIsLoadingProgress(false);
+        }
+
+        initPlayer();
+    }, [sessionId, router, questions.length]);
 
     // 1. Authenticate the device
     useEffect(() => {
@@ -78,7 +124,14 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         }, 3000);
     };
 
-    if (!participantId) return <div className="flex h-screen items-center justify-center"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>;
+    if (!participantId || isLoadingProgress) {
+        return (
+            <div className="flex h-screen flex-col items-center justify-center gap-4">
+                <Loader2 className="w-10 h-10 text-[#4ce0a3] animate-spin" />
+                <p className="text-slate-400 font-semibold animate-pulse">Reconnecting to session...</p>
+            </div>
+        );
+    }
 
     // --- VIEW 1: RESULTS SCREEN ---
     if (isFinished) {
