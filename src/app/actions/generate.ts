@@ -220,6 +220,8 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
                 },
             })
 
+            quizData.id = quiz.id;
+
         } catch (error) {
             console.error("Failed to save quiz:", error);
             return { error: "Failed to save quiz." };
@@ -230,5 +232,40 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
     } catch (error) {
         console.log(error)
         return { error: "Failed to generate Quiz", reason: "serverError" }
+    }
+}
+
+//Create async quiz session
+export async function createAsyncSession(quizId: string, hostId: string, expiresAt: Date) {
+    try {
+        let joinCode = "";
+        let isUnique = false;
+
+        // Generate a random 6-digit PIN and ensure it doesn't already exist
+        while (!isUnique) {
+            joinCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const existing = await prisma.gameSession.findUnique({
+                where: { joinCode }
+            });
+            if (!existing) {
+                isUnique = true;
+            }
+        }
+
+        const session = await prisma.gameSession.create({
+            data: {
+                joinCode,
+                quizId,
+                hostId,
+                mode: "ASYNC",
+                status: "IN_PROGRESS",
+                expiresAt,
+            }
+        });
+
+        return { session };
+    } catch (error) {
+        console.error("Failed to create session:", error);
+        return { error: "Failed to create assignment session." };
     }
 }
