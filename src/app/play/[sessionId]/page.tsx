@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import AsyncPlayer from "./_components/AsyncPlayer";
+import LivePlayer from "./_components/LivePlayer";
 
 interface PlayPageProps {
     params: Promise<{ sessionId: string }>;
@@ -36,10 +37,13 @@ export default async function PlayPage({ params }: PlayPageProps) {
                     questions={session.quiz.questions as any[]}
                 />
             ) : (
-                <div className="text-white text-center pt-20">
-                    {/* We will build the Live component later! */}
-                    <h1 className="text-2xl">Live Mode coming soon...</h1>
-                </div>
+                <LivePlayer
+                    sessionId={session.id}
+                    quizTitle={session.quiz.title}
+                    questions={session.quiz.questions as any[]}
+                    initialIndex={session.currentQuestionIndex}
+                    initialStatus={session.status}
+                />
             )}
         </div>
     );
