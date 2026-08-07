@@ -3,7 +3,7 @@ import { CircleUserRound, Cog, LayoutDashboard, LogOut, Menu, PanelRightClose, P
 import Logo from "./Logo";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { AppUser } from "../page";
+import type { AppUser } from "../page";
 import SignupModal from "./SignUpModal";
 import Link from "next/link";
 import { logOutUser } from "../actions";

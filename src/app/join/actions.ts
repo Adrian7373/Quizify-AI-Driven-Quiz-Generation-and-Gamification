@@ -17,7 +17,7 @@ export async function joinGameSession(pin: string, nickname: string, userId?: st
 
         // 3. Validation Checks
         if (!session) return { error: "We didn't recognize that Game PIN. Please check and try again." };
-        if (session.status !== "IN_PROGRESS") return { error: "This game is currently not active." };
+        if (session.status === "FINISHED") return { error: "This game has already ended." };
         if (session.expiresAt && new Date() > session.expiresAt) return { error: "This assignment has expired." };
 
         // 4. Create the Participant
