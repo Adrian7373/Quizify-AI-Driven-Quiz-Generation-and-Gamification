@@ -269,3 +269,36 @@ export async function createAsyncSession(quizId: string, hostId: string, expires
         return { error: "Failed to create assignment session." };
     }
 }
+
+//Create live game session
+export async function createLiveSession(quizId: string, hostId: string) {
+    try {
+        let joinCode = "";
+        let isUnique = false;
+
+        // Generate a random 6-digit PIN
+        while (!isUnique) {
+            joinCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const existing = await prisma.gameSession.findUnique({
+                where: { joinCode }
+            });
+            if (!existing) isUnique = true;
+        }
+
+        const session = await prisma.gameSession.create({
+            data: {
+                joinCode,
+                quizId,
+                hostId,
+                mode: "LIVE",
+                status: "WAITING", // Starts in waiting room
+                currentQuestionIndex: 0,
+            }
+        });
+
+        return { session };
+    } catch (error) {
+        console.error("Failed to create live session:", error);
+        return { error: "Failed to create live game." };
+    }
+}
