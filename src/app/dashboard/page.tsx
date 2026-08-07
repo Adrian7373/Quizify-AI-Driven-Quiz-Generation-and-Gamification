@@ -4,8 +4,10 @@ import { redirect } from "next/navigation";
 import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
 import Link from "next/link";
-import { BrainCircuit, Calendar, CheckCircle2, Clock, FileQuestion, PlayCircle, Users } from "lucide-react";
+import { BrainCircuit, Calendar, CheckCircle2, Clock, FileQuestion, PlayCircle, Trophy, Users } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
+import EndSessionButton from "./_components/EndSessionButton";
+import ActiveLiveWidget from "../_components/ActiveLiveWidget";
 
 interface DashboardProps {
     searchParams: Promise<{ tab?: string }>;
@@ -33,6 +35,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     // 3. We only fetch the data required for the currently active tab.
     let quizzes: any[] = [];
     let activeSessions: any[] = [];
+    let completedSessions: any[] = [];
 
     if (currentTab === "quizzes") {
         quizzes = await prisma.quiz.findMany({
@@ -60,11 +63,25 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 _count: { select: { participants: true } }
             }
         });
+    } else if (currentTab === "reports") {
+        // 2. Fetch FINISHED sessions
+        completedSessions = await prisma.gameSession.findMany({
+            where: {
+                hostId: authUser.id,
+                status: "FINISHED" // Only get finished sessions
+            },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                quiz: { select: { title: true } },
+                _count: { select: { participants: true } }
+            }
+        });
     }
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             <NavBar user={appUser} />
+            <ActiveLiveWidget userId={authUser.id} />
 
             <main className="flex-1 pt-24 px-6 md:px-12 max-w-7xl mx-auto w-full pb-12">
                 <div className="flex justify-between items-end mb-8">
@@ -197,14 +214,60 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
 
                                     {/* Actions */}
                                     <div className="flex gap-2 w-full sm:w-auto">
-                                        {/* Note: We will build these target pages next! */}
                                         <Link href={`/dashboard/reports/${session.id}`} className="flex-1 sm:flex-none text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-2.5 rounded-lg transition-colors">
                                             View Progress
                                         </Link>
-                                        <button className="flex-1 sm:flex-none bg-rose-100 hover:bg-rose-200 text-rose-700 font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
-                                            <CheckCircle2 className="w-4 h-4" /> End Early
-                                        </button>
+                                        <EndSessionButton sessionId={session.id} hostId={authUser.id} />
                                     </div>
+
+                                </div>
+                            ))}
+                        </div>
+                    )
+                )}
+
+                {/* --- TAB 3: COMPLETED REPORTS --- */}
+                {currentTab === "reports" && (
+                    completedSessions.length === 0 ? (
+                        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center">
+                            <div className="bg-slate-100 p-4 rounded-full mb-4">
+                                <Trophy className="w-8 h-8 text-slate-400" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-slate-800">No completed reports</h3>
+                            <p className="text-slate-500 mt-2 mb-6 max-w-md">
+                                When an active assignment ends, the final report with grades and leaderboards will appear here.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            {completedSessions.map((session) => (
+                                <div key={session.id} className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-slate-300 transition-colors">
+
+                                    <div className="flex items-center gap-5">
+                                        <div className="bg-slate-50 border border-slate-100 px-4 py-3 rounded-lg text-center shrink-0">
+                                            <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                                        </div>
+
+                                        <div>
+                                            <h3 className="text-lg font-bold text-slate-800">{session.quiz.title}</h3>
+                                            <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Users className="w-4 h-4" /> {session._count.participants} Played
+                                                </span>
+                                                <span className="flex items-center gap-1.5">
+                                                    <Calendar className="w-4 h-4" />
+                                                    Ended {formatDistanceToNow(new Date(session.createdAt), { addSuffix: true })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Link
+                                        href={`/dashboard/reports/${session.id}`}
+                                        className="w-full sm:w-auto text-center bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors"
+                                    >
+                                        View Final Grades
+                                    </Link>
 
                                 </div>
                             ))}
