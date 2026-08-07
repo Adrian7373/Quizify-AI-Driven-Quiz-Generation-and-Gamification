@@ -9,7 +9,7 @@ import handleAnonymousGeneration from "../actions/generate";
 import fpPromise from '@fingerprintjs/fingerprintjs'
 import SignupModal from "./SignUpModal";
 import { handleAuthenticatedGeneration } from "../actions/generate";
-import { AppUser, InputOption, QuizData, QuizType, DifficultyType } from "../page";
+import type { AppUser, InputOption, QuizData, QuizType, DifficultyType } from "../page";
 import { useRouter } from "next/navigation";
 
 interface HomeClientProps {
@@ -303,7 +303,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
               onClick={generateQuiz}
               disabled={isGenerating || (user ? user.aiCredits <= 0 : false)}
               className={`
-            relative flex disabled:bg-slate-600 z-30 disabled:text-slate-300 disabled:cursor-not-allowed items-center justify-center gap-3 py-4 w-full rounded-lg text-lg font-semibold transition-colors mt-5
+            relative flex disabled:bg-slate-600 z-30 max-w-md disabled:text-slate-300 disabled:cursor-not-allowed items-center justify-center gap-3 py-4 w-full rounded-lg text-lg font-semibold transition-colors mt-5
             ${isGenerating
                   ? 'bg-slate-600 text-slate-300 cursor-not-allowed'
                   : 'bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900'
