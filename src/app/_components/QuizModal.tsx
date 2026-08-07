@@ -6,11 +6,13 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { CalendarClock, Check, CircleX, Copy, Trash } from 'lucide-react';
-import { AppUser } from '../page';
+import type { AppUser } from '../page';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { deleteQuiz } from '../actions';
 import { createAsyncSession } from '../actions/generate';
+import { Play } from 'lucide-react';
+import { createLiveSession } from '../actions/generate';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -327,6 +329,18 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
 
     }
 
+    const handleCreateLive = async () => {
+        if (!user || !quizData?.id) return;
+
+        const response = await createLiveSession(quizData.id, user.id);
+        if (response.error) {
+            toast.error(response.error);
+        } else {
+            // Route the teacher to the Host Control Panel
+            router.push(`/host/${response.session!.id}`);
+        }
+    }
+
     return (
         <div className="w-full h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans overflow-hidden">
             {/* 1. TOP NAVIGATION BAR */}
@@ -407,6 +421,17 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                         >
                             <CalendarClock className='w-4 h-4' />
                             {sm && "Assign"}
+                        </button>
+                    )}
+
+                    {/* Host Live Button */}
+                    {user && quizData.id && (
+                        <button
+                            onClick={handleCreateLive}
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors print:hidden"
+                        >
+                            <Play className='w-4 h-4' fill="currentColor" />
+                            {sm && "Host Live"}
                         </button>
                     )}
 
