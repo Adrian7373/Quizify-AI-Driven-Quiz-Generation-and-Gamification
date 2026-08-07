@@ -127,7 +127,6 @@ export async function endSessionEarly(sessionId: string, hostId: string) {
     }
 }
 
-
 //Live session checker
 export async function getActiveLiveSession(hostId: string) {
     try {
