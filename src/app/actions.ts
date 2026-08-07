@@ -126,3 +126,29 @@ export async function endSessionEarly(sessionId: string, hostId: string) {
         return { error: "An error occurred while ending the session." };
     }
 }
+
+
+//Live session checker
+export async function getActiveLiveSession(hostId: string) {
+    try {
+        const activeSession = await prisma.gameSession.findFirst({
+            where: {
+                hostId: hostId,
+                mode: "LIVE",
+                status: {
+                    in: ["WAITING", "IN_PROGRESS"]
+                }
+            },
+            select: {
+                id: true,
+                status: true,
+                quiz: { select: { title: true } }
+            }
+        });
+
+        return { session: activeSession };
+    } catch (error) {
+        console.error("Failed to check active session:", error);
+        return { session: null };
+    }
+}
