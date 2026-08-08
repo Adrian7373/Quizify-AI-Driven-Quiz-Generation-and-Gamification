@@ -67,6 +67,7 @@ model Question {
   options       Json         @default("[]") // Empty for Identification & Flashcard
   correctAnswer String
   explanation   String       @default("")
+  timeLimitSeconds Int?
 }
 
 model GameSession {
