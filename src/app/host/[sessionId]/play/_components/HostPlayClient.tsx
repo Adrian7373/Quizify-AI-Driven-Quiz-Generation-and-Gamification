@@ -128,26 +128,46 @@ export default function HostPlayClient({ sessionId, quizTitle, questions, initia
                 </div>
 
                 {/* Control Footer */}
-                <div className="flex justify-end shrink-0">
+                <div className="flex justify-between items-center shrink-0 mt-4 w-full">
+                    {/* NEW: End Early Abort Button */}
                     {!isLastQuestion ? (
                         <button
-                            onClick={handleNextQuestion}
+                            onClick={() => {
+                                if (window.confirm("Are you sure you want to end this game early? All players will be sent to the final podium.")) {
+                                    handleEndGame();
+                                }
+                            }}
                             disabled={isAdvancing}
-                            className="bg-indigo-500 hover:bg-indigo-400 text-white text-2xl font-black px-10 py-5 rounded-xl shadow-xl transition-transform hover:scale-105 flex items-center gap-3 disabled:opacity-70 disabled:hover:scale-100"
+                            className="text-rose-500 hover:text-rose-400 font-bold px-4 py-2 transition-colors disabled:opacity-50"
                         >
-                            {isAdvancing ? <Loader2 className="w-8 h-8 animate-spin" /> : "Next Question"}
-                            {!isAdvancing && <ChevronRight className="w-8 h-8" />}
+                            End Game Early
                         </button>
                     ) : (
-                        <button
-                            onClick={handleEndGame}
-                            disabled={isAdvancing}
-                            className="bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-black px-10 py-5 rounded-xl shadow-xl transition-transform hover:scale-105 flex items-center gap-3 disabled:opacity-70 disabled:hover:scale-100"
-                        >
-                            {isAdvancing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Trophy className="w-8 h-8" />}
-                            End Game & Show Podium
-                        </button>
+                        <div></div> // Spacer to maintain flex layout
                     )}
+
+                    {/* Existing Primary Controls */}
+                    <div className="flex justify-end">
+                        {!isLastQuestion ? (
+                            <button
+                                onClick={handleNextQuestion}
+                                disabled={isAdvancing}
+                                className="bg-indigo-500 hover:bg-indigo-400 text-white text-2xl font-black px-10 py-5 rounded-xl shadow-xl transition-transform hover:scale-105 flex items-center gap-3 disabled:opacity-70 disabled:hover:scale-100"
+                            >
+                                {isAdvancing ? <Loader2 className="w-8 h-8 animate-spin" /> : "Next Question"}
+                                {!isAdvancing && <ChevronRight className="w-8 h-8" />}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleEndGame}
+                                disabled={isAdvancing}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-black px-10 py-5 rounded-xl shadow-xl transition-transform hover:scale-105 flex items-center gap-3 disabled:opacity-70 disabled:hover:scale-100"
+                            >
+                                {isAdvancing ? <Loader2 className="w-8 h-8 animate-spin" /> : <Trophy className="w-8 h-8" />}
+                                End Game & Show Podium
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
