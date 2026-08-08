@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { endSessionEarly } from "@/app/actions";
-import { ChevronRight, Trophy, Loader2 } from "lucide-react";
+import { ChevronRight, Trophy, Loader2, Timer } from "lucide-react";
 import toast from "react-hot-toast";
 import { updateQuestionIndex } from "../../actions";
 
@@ -19,9 +19,41 @@ export default function HostPlayClient({ sessionId, quizTitle, questions, initia
     const router = useRouter();
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [isAdvancing, setIsAdvancing] = useState(false);
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
     const currentQuestion = questions[currentIndex];
     const isLastQuestion = currentIndex === questions.length - 1;
+
+    useEffect(() => {
+        if (currentQuestion.timeLimitSeconds) {
+            setTimeLeft(currentQuestion.timeLimitSeconds);
+        } else {
+            setTimeLeft(null); // Infinite time
+        }
+    }, [currentIndex, currentQuestion]);
+
+    useEffect(() => {
+        // Stop counting if time is null, already 0, or we are currently loading the next question
+        if (timeLeft === null || timeLeft <= 0 || isAdvancing) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev !== null && prev <= 1) {
+                    clearInterval(timer);
+                    // Time's up! Auto-advance to the next question
+                    if (!isLastQuestion) {
+                        handleNextQuestion();
+                    } else {
+                        handleEndGame();
+                    }
+                    return 0;
+                }
+                return prev ? prev - 1 : 0;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeLeft, isAdvancing, isLastQuestion]);
 
     const handleNextQuestion = async () => {
         if (isLastQuestion) return;
@@ -57,6 +89,14 @@ export default function HostPlayClient({ sessionId, quizTitle, questions, initia
             {/* Top Bar */}
             <div className="bg-slate-800 p-4 flex justify-between items-center shadow-md shrink-0">
                 <h1 className="text-xl font-bold text-white">{quizTitle}</h1>
+
+                {timeLeft !== null && (
+                    <div className="flex items-center gap-2 bg-rose-500/20 text-rose-400 px-4 py-2 rounded-full font-bold border border-rose-500/30">
+                        <Timer className="w-5 h-5" />
+                        <span className="text-xl">{timeLeft}s</span>
+                    </div>
+                )}
+
                 <div className="bg-slate-700 px-4 py-2 rounded-full text-slate-300 font-bold text-sm">
                     Question {currentIndex + 1} of {questions.length}
                 </div>
@@ -76,8 +116,8 @@ export default function HostPlayClient({ sessionId, quizTitle, questions, initia
                             <div
                                 key={idx}
                                 className={`p-4 rounded-xl font-bold text-lg border-2 ${option === currentQuestion.correctAnswer
-                                        ? 'bg-emerald-100 border-emerald-500 text-emerald-800'
-                                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                                    ? 'bg-emerald-100 border-emerald-500 text-emerald-800'
+                                    : 'bg-slate-50 border-slate-200 text-slate-600'
                                     }`}
                             >
                                 {option}
