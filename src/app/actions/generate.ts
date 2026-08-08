@@ -303,3 +303,88 @@ export async function createLiveSession(quizId: string, hostId: string) {
         return { error: "Failed to create live game." };
     }
 }
+
+
+//Generate game session class insights
+
+export async function generateClassInsight(sessionId: string) {
+    try {
+        // 1. Fetch the full game session with questions and all student responses
+        const session = await prisma.gameSession.findUnique({
+            where: { id: sessionId },
+            include: {
+                quiz: {
+                    include: { questions: true }
+                },
+                participants: {
+                    include: { responses: true }
+                }
+            }
+        });
+
+        if (!session) return { error: "Session not found." };
+        if (session.classInsight) return { success: true, insight: session.classInsight }; // Already generated
+        if (session.participants.length === 0) return { error: "No student data to analyze." };
+
+        // 2. Aggregate the math: Which questions were hardest?
+        const questionStats = session.quiz.questions.map(question => {
+            // Find all responses for THIS specific question
+            const responsesForQ = session.participants.flatMap(p =>
+                p.responses.filter(r => r.questionId === question.id)
+            );
+
+            const totalAnswers = responsesForQ.length;
+            const correctAnswers = responsesForQ.filter(r => r.isCorrect).length;
+            const accuracy = totalAnswers > 0 ? (correctAnswers / totalAnswers) * 100 : 100;
+
+            return {
+                questionText: question.questionText,
+                correctAnswer: question.correctAnswer,
+                accuracy: Math.round(accuracy),
+                totalAnswers
+            };
+        });
+
+        // 3. Filter for questions where accuracy was below 60%, sorted by hardest first
+        const struggleQuestions = questionStats
+            .filter(q => q.accuracy < 60)
+            .sort((a, b) => a.accuracy - b.accuracy);
+
+        if (struggleQuestions.length === 0) {
+            const perfectInsight = "Your class performed exceptionally well across the board! No significant conceptual gaps were detected.";
+            await prisma.gameSession.update({
+                where: { id: sessionId },
+                data: { classInsight: perfectInsight }
+            });
+            return { success: true, insight: perfectInsight };
+        }
+
+        // 4. Send to your Python Flask/Django Microservice
+        // Replace with your actual Python backend URL
+        const pythonApiUrl = process.env.PYTHON_AI_URL || 'http://localhost:5000/api/insights';
+
+        const aiResponse = await fetch(pythonApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quizTitle: session.quiz.title,
+                struggleQuestions: struggleQuestions.slice(0, 3) // Only send the top 3 hardest to save tokens
+            })
+        });
+
+        if (!aiResponse.ok) throw new Error("Python API failed");
+        const aiData = await aiResponse.json();
+
+        // 5. Save the generated string to Prisma
+        await prisma.gameSession.update({
+            where: { id: sessionId },
+            data: { classInsight: aiData.insight }
+        });
+
+        return { success: true, insight: aiData.insight };
+
+    } catch (error) {
+        console.error("Failed to generate insight:", error);
+        return { error: "Failed to generate class insights." };
+    }
+}
