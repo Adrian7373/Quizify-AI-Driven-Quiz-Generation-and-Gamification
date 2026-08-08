@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma"
 import { QuizData } from "./page";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export async function getUser(userId: string) {
 
@@ -149,5 +150,61 @@ export async function getActiveLiveSession(hostId: string) {
     } catch (error) {
         console.error("Failed to check active session:", error);
         return { session: null };
+    }
+}
+
+//Update quiz data
+
+interface UpdateQuizData {
+    title: string;
+    description: string;
+    questions: {
+        questionText: string;
+        options: string[];
+        correctAnswer: string;
+        explanation: string;
+        timeLimitSeconds?: number | null;
+    }[];
+}
+
+export async function updateQuiz(quizId: string, userId: string, data: UpdateQuizData) {
+    try {
+        // 1. Verify Ownership (Security Check)
+        const existingQuiz = await prisma.quiz.findUnique({
+            where: { id: quizId },
+            select: { creatorId: true }
+        });
+
+        if (!existingQuiz) return { error: "Quiz not found." };
+        if (existingQuiz.creatorId !== userId) return { error: "Unauthorized. You do not own this quiz." };
+
+        // 2. Perform Atomic Nested Update
+        await prisma.quiz.update({
+            where: { id: quizId },
+            data: {
+                title: data.title,
+                description: data.description,
+                // Replace all existing questions with the newly edited array
+                questions: {
+                    deleteMany: {},
+                    create: data.questions.map((q) => ({
+                        questionText: q.questionText,
+                        options: q.options || [],
+                        correctAnswer: q.correctAnswer,
+                        explanation: q.explanation,
+                        timeLimitSeconds: q.timeLimitSeconds || null
+                    }))
+                }
+            }
+        });
+
+        // 3. Purge the cache so the NavBar and Dashboard instantly reflect the new Title/Questions
+        revalidatePath('/', 'layout');
+
+        return { success: true };
+
+    } catch (error) {
+        console.error("Failed to update quiz:", error);
+        return { error: "An error occurred while saving your edits." };
     }
 }
