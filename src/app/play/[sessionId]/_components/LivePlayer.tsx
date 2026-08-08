@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Loader2, Trophy, Clock, CheckCircle2 } from "lucide-react";
+import { Loader2, Trophy, Clock, CheckCircle2, Timer } from "lucide-react";
 import toast from "react-hot-toast";
 import { submitAnswer, getParticipantProgress } from "../actions";
 
@@ -18,6 +18,7 @@ interface LivePlayerProps {
 export default function LivePlayer({ sessionId, quizTitle, initialStatus, questions, initialIndex }: LivePlayerProps) {
     const router = useRouter();
     const supabase = createClient();
+    const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
     const [participantId, setParticipantId] = useState<string | null>(null);
     const [isLoadingProgress, setIsLoadingProgress] = useState(true);
@@ -99,7 +100,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
     }, [sessionId, currentIndex, supabase]);
 
     const handleAnswerClick = async (answer: string) => {
-        if (hasAnswered || !participantId) return;
+        if (hasAnswered || !participantId || timeLeft === 0) return;
 
         const timeTakenMs = Date.now() - questionStartTime;
         const currentQuestion = questions[currentIndex];
@@ -170,12 +171,43 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
     const currentQuestion = questions[currentIndex];
 
+    // 1. Reset timer when the teacher advances the question
+    useEffect(() => {
+        if (currentQuestion?.timeLimitSeconds) {
+            setTimeLeft(currentQuestion.timeLimitSeconds);
+        } else {
+            setTimeLeft(null);
+        }
+    }, [currentIndex, currentQuestion]);
+
+    // 2. Local countdown loop
+    useEffect(() => {
+        if (timeLeft === null || timeLeft <= 0 || hasAnswered || isWaiting) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => (prev && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeLeft, hasAnswered, isWaiting]);
+
     return (
         <div className="flex flex-col h-screen max-w-3xl mx-auto p-4 md:p-8">
             <div className="flex items-center justify-between text-white mb-8 shrink-0">
                 <div className="bg-slate-800 px-4 py-2 rounded-full font-bold">
                     Q {currentIndex + 1}
                 </div>
+
+                {timeLeft !== null && !hasAnswered && (
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold border ${timeLeft <= 5
+                        ? 'bg-rose-500/20 text-rose-400 border-rose-500/30 animate-pulse'
+                        : 'bg-slate-800 text-slate-300 border-transparent'
+                        }`}>
+                        <Timer className="w-5 h-5" />
+                        <span className="text-xl">{timeLeft}s</span>
+                    </div>
+                )}
+
                 <div className="bg-slate-800 px-4 py-2 rounded-full font-bold flex items-center gap-2">
                     Score: <span className="text-[#4ce0a3]">{score}</span>
                 </div>
@@ -189,6 +221,13 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
                     <p className="text-slate-400 flex items-center gap-2">
                         <Clock className="w-5 h-5 animate-pulse" /> Waiting for host...
                     </p>
+                </div>
+            ) : timeLeft === 0 ? (
+                // NEW: Time's Up View (Shown if time runs out before the host officially advances)
+                <div className="flex-1 flex flex-col justify-center items-center bg-rose-500/10 rounded-2xl border-2 border-rose-500/30 p-8 animate-in fade-in">
+                    <Timer className="w-20 h-20 text-rose-400 mb-4" />
+                    <h2 className="text-3xl font-bold text-white mb-2">Time's Up!</h2>
+                    <p className="text-slate-400">Waiting for host to continue...</p>
                 </div>
             ) : (
                 <>
