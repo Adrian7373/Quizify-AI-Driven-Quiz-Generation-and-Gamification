@@ -208,3 +208,30 @@ export async function updateQuiz(quizId: string, userId: string, data: UpdateQui
         return { error: "An error occurred while saving your edits." };
     }
 }
+
+
+
+//Delete game session
+
+export async function deleteGameSession(sessionId: string, hostId: string) {
+    try {
+        // 1. Verify Ownership
+        const session = await prisma.gameSession.findUnique({
+            where: { id: sessionId },
+            select: { hostId: true }
+        });
+
+        if (!session) return { error: "Session not found." };
+        if (session.hostId !== hostId) return { error: "Unauthorized." };
+
+        // 2. Delete the session
+        await prisma.gameSession.delete({
+            where: { id: sessionId }
+        });
+
+        return { success: true };
+    } catch (error) {
+        console.error("Failed to delete session:", error);
+        return { error: "An error occurred while deleting the session." };
+    }
+}
