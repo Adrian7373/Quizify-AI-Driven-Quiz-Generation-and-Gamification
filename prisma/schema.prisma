@@ -83,6 +83,7 @@ model GameSession {
   participants         Participant[]
   createdAt            DateTime      @default(now())
   expiresAt            DateTime?
+  classInsight  String?   @db.Text
 }
 
 model Participant {
