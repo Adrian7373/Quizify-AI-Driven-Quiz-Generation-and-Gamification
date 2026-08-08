@@ -215,6 +215,7 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
                             options: question.options,
                             correctAnswer: question.correctAnswer,
                             explanation: question.explanation,
+                            timeLimitSeconds: question.timeLimitSeconds
                         }))
                     }
                 },
