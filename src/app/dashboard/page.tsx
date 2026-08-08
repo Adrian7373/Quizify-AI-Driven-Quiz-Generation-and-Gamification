@@ -8,6 +8,7 @@ import { BrainCircuit, Calendar, CheckCircle2, Clock, FileQuestion, PlayCircle, 
 import { formatDistanceToNow, format } from "date-fns";
 import EndSessionButton from "./_components/EndSessionButton";
 import ActiveLiveWidget from "../_components/ActiveLiveWidget";
+import DeleteSessionButton from "./_components/DeleteSessionButton";
 
 interface DashboardProps {
     searchParams: Promise<{ tab?: string }>;
@@ -262,12 +263,20 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                                         </div>
                                     </div>
 
-                                    <Link
-                                        href={`/dashboard/reports/${session.id}`}
-                                        className="w-full sm:w-auto text-center bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors"
-                                    >
-                                        View Final Grades
-                                    </Link>
+                                    <div className="flex items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+                                        <Link
+                                            href={`/dashboard/reports/${session.id}`}
+                                            className="flex-1 sm:flex-none text-center bg-slate-900 hover:bg-slate-800 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors"
+                                        >
+                                            View Final Grades
+                                        </Link>
+
+                                        {/* NEW: Delete Button */}
+                                        <DeleteSessionButton
+                                            sessionId={session.id}
+                                            hostId={authUser.id}
+                                        />
+                                    </div>
 
                                 </div>
                             ))}
