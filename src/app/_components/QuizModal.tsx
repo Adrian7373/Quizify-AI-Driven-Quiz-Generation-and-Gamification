@@ -646,11 +646,11 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                                             {isIdentification ? (
                                                 <div>
                                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Correct Answer</label>
-                                                    <input
-                                                        type="text"
+                                                    <textarea
                                                         value={q.correctAnswer}
                                                         onChange={(e) => handleQuestionChange(index, "correctAnswer", e.target.value)}
-                                                        className="w-full md:max-w-md p-3 border-2 border-slate-200 rounded-lg focus:border-[#4ce0a3] focus:outline-none font-medium text-slate-700 transition-colors"
+                                                        className="w-full md:max-w-md p-3 border-2 border-slate-200 rounded-lg focus:border-[#4ce0a3] focus:outline-none font-medium text-slate-700 transition-colors resize-y"
+                                                        rows={2}
                                                     />
                                                 </div>
                                             ) : (
@@ -658,20 +658,20 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 block">Options & Correct Answer</label>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                         {q.options.map((opt, optIdx) => (
-                                                            <div key={optIdx} className={`flex items-center gap-2 sm:gap-3 p-2 border-2 rounded-lg transition-colors ${q.correctAnswer === opt ? 'border-[#4ce0a3] bg-[#4ce0a3]/5' : 'border-slate-200'}`}>
+                                                            <div key={optIdx} className={`flex items-start gap-2 sm:gap-3 p-2 border-2 rounded-lg transition-colors ${q.correctAnswer === opt ? 'border-[#4ce0a3] bg-[#4ce0a3]/5' : 'border-slate-200'}`}>
                                                                 <input
                                                                     type="radio"
                                                                     name={`correct-answer-${index}`}
                                                                     checked={q.correctAnswer === opt}
                                                                     onChange={() => handleQuestionChange(index, "correctAnswer", opt)}
-                                                                    className="w-4 h-4 text-[#4ce0a3] focus:ring-[#4ce0a3] cursor-pointer ml-1 sm:ml-2 shrink-0"
+                                                                    className="w-4 h-4 text-[#4ce0a3] focus:ring-[#4ce0a3] cursor-pointer ml-1 sm:ml-2 shrink-0 mt-3"
                                                                 />
-                                                                <input
-                                                                    type="text"
+                                                                <textarea
                                                                     value={opt}
                                                                     onChange={(e) => handleOptionChange(index, optIdx, e.target.value)}
-                                                                    className="flex-1 p-2 bg-transparent border-none focus:ring-0 focus:outline-none font-medium text-slate-700 text-sm sm:text-base min-w-0"
+                                                                    className="flex-1 p-2 bg-transparent border-none focus:ring-0 focus:outline-none font-medium text-slate-700 text-sm sm:text-base min-w-0 resize-y"
                                                                     placeholder={`Option ${optIdx + 1}`}
+                                                                    rows={2}
                                                                 />
                                                             </div>
                                                         ))}
@@ -747,7 +747,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                                                 <textarea
                                                     value={q.explanation}
                                                     onChange={(e) => handleQuestionChange(index, "explanation", e.target.value)}
-                                                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:border-[#4ce0a3] focus:outline-none text-slate-600 text-sm transition-colors resize-none"
+                                                    className="w-full p-3 border-2 border-slate-200 rounded-lg focus:border-[#4ce0a3] focus:outline-none text-slate-600 text-sm transition-colors resize-y"
                                                     rows={3}
                                                 />
                                             </div>
