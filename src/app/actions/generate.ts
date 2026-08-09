@@ -69,12 +69,14 @@ export default async function handleAnonymousGeneration(formData: FormData, visi
         const questionCount = formData.get("questionCount") as string;
         const inputType = formData.get("inputType") as string;
         const difficulty = formData.get("difficulty") as string;
+        const language = formData.get("language") as string;
 
         const flaskFormData = new FormData();
         flaskFormData.append("quizType", quizType ?? "Multiple Choice");
         flaskFormData.append("questionCount", questionCount ?? "10");
         flaskFormData.append("inputType", inputType ?? "Text");
         flaskFormData.append("difficulty", difficulty ?? "normal")
+        flaskFormData.append("language", language ?? "English");
 
         if (inputType === "Text") {
             const text = formData.get("text");
@@ -155,12 +157,14 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         const questionCount = formData.get("questionCount") as string;
         const inputType = formData.get("inputType") as string;
         const difficulty = formData.get("difficulty") as string;
+        const language = formData.get("language") as string;
 
         const flaskFormData = new FormData();
         flaskFormData.append("quizType", quizType ?? "Multiple Choice");
         flaskFormData.append("questionCount", questionCount ?? "10");
         flaskFormData.append("inputType", inputType ?? "Text");
         flaskFormData.append("difficulty", difficulty ?? "normal");
+        flaskFormData.append("language", language ?? "English");
 
         if (inputType === "Text") {
             const text = formData.get("text");
