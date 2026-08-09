@@ -6,6 +6,7 @@ import { getUser } from "@/app/actions";
 import Link from "next/link";
 import { ArrowLeft, Trophy, Users, Target, Flame } from "lucide-react";
 import { format } from "date-fns";
+import AiInsightsCard from "./_components/AiInsightsCard"; // 1. Added Import
 
 interface ReportPageProps {
     params: Promise<{ sessionId: string }>;
@@ -41,7 +42,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
                 orderBy: { totalScore: 'desc' }, // The Leaderboard logic!
                 include: {
                     responses: {
-                        select: { isCorrect: true } // We need this to calculate accuracy
+                        select: { isCorrect: true, questionId: true } // We need this to calculate accuracy
                     }
                 }
             }
@@ -86,6 +87,12 @@ export default async function ReportPage({ params }: ReportPageProps) {
                         </div>
                     </div>
                 </div>
+
+                {/* 2. ADDED AI INSIGHTS CARD */}
+                <AiInsightsCard
+                    sessionId={session.id}
+                    initialInsight={session.classInsight}
+                />
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
