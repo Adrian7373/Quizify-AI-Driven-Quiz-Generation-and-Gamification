@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
 import Link from "next/link";
-import { BrainCircuit, Calendar, CheckCircle2, Clock, FileQuestion, PlayCircle, Trophy, Users } from "lucide-react";
+import { BrainCircuit, Calendar, CheckCircle2, Clock, FileQuestion, Layers, PlayCircle, Trophy, Users } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import EndSessionButton from "./_components/EndSessionButton";
 import ActiveLiveWidget from "../_components/ActiveLiveWidget";
@@ -91,13 +91,23 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                         <p className="text-slate-500 mt-1">Manage, host, and assign your generated content.</p>
                     </div>
 
-                    <Link
-                        href="/"
-                        className="hidden sm:flex items-center gap-2 bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900 px-5 py-2.5 rounded-lg font-semibold transition-colors"
-                    >
-                        <BrainCircuit className="w-5 h-5" />
-                        Generate New
-                    </Link>
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <Link
+                            href="/dashboard/bank"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold rounded-xl border border-indigo-100 transition-all hover:scale-105 shrink-0"
+                        >
+                            <Layers className="w-5 h-5" />
+                            Question Bank
+                        </Link>
+
+                        <Link
+                            href="/"
+                            className="hidden sm:flex items-center gap-2 bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900 px-5 py-2.5 rounded-lg font-semibold transition-colors"
+                        >
+                            <BrainCircuit className="w-5 h-5" />
+                            Generate New
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="flex gap-6 border-b border-slate-200 mb-8">
