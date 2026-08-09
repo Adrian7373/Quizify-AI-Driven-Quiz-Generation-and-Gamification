@@ -32,6 +32,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
   const [questionCount, setQuestionCount] = useState("5");
   const [isNoCredits, setIsNoCredits] = useState(false);
   const [difficulty, setDifficulty] = useState<DifficultyType>("normal");
+  const [language, setLanguage] = useState("English");
 
   //Modal state
   const [isOpen, setIsOpen] = useState(false);
@@ -83,6 +84,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
       formData.append("questionCount", questionCount)
       formData.append("inputType", selectedOption)
       formData.append("difficulty", difficulty)
+      formData.append("language", language);
 
       if (selectedOption === "Text" && textInput) {
         formData.append("text", textInput);
@@ -278,6 +280,25 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
                   </select>
                 </label>
               </div>
+            </div>
+
+            <div className="w-full mb-4">
+              <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Quiz Language
+              </label>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full p-3 sm:p-4 border-2 border-slate-200 rounded-lg focus:outline-none focus:border-[#4ce0a3] transition-colors text-slate-700 font-medium bg-white"
+              >
+                <option value="English">English</option>
+                <option value="Filipino">Filipino</option>
+                <option value="Taglish (Tagalog-English)">Taglish</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="Japanese">Japanese</option>
+                {/* Add any other languages you want to support */}
+              </select>
             </div>
 
             <QuizTypeSelector quizType={selectedType} handleTypeChange={handleSelectQuizType} />
