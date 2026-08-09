@@ -104,7 +104,7 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                             </div>
                             <p className="text-gray-400 mb-2 text-sm">Recent quizzes</p>
                             <hr />
-                            <div className="flex flex-col h-80 overflow-y-auto text-white gap-3 py-3">
+                            <div className="flex flex-col h-140 overflow-y-auto text-white gap-3 py-3">
                                 {user ? (
                                     user.quizzes.map((quiz) => {
                                         // AUTHENTICATED CHECK: Does the URL match this quiz?
