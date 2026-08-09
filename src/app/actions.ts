@@ -235,3 +235,44 @@ export async function deleteGameSession(sessionId: string, hostId: string) {
         return { error: "An error occurred while deleting the session." };
     }
 }
+
+
+//Creates a quiz from existing questions
+export async function createQuizFromBank(userId: string, title: string, description: string, questionIds: string[]) {
+    try {
+        // 1. Fetch the selected historical questions
+        const originalQuestions = await prisma.question.findMany({
+            where: {
+                id: { in: questionIds },
+                quiz: { creatorId: userId } // Security: Ensure they own these questions
+            }
+        });
+
+        if (originalQuestions.length === 0) return { error: "No valid questions found." };
+
+        // 2. Create the new Quiz and insert copies of the questions
+        const newQuiz = await prisma.quiz.create({
+            data: {
+                creatorId: userId,
+                title: title,
+                description: description,
+                difficulty: "mixed", // Since it's from a bank, difficulty varies
+                questions: {
+                    create: originalQuestions.map(q => ({
+                        questionText: q.questionText,
+                        options: q.options || [],
+                        correctAnswer: q.correctAnswer,
+                        explanation: q.explanation,
+                        type: q.type,
+                        timeLimitSeconds: q.timeLimitSeconds
+                    }))
+                }
+            }
+        });
+
+        return { success: true, quizId: newQuiz.id };
+    } catch (error) {
+        console.error("Failed to create quiz from bank:", error);
+        return { error: "An error occurred while creating your combined quiz." };
+    }
+}
