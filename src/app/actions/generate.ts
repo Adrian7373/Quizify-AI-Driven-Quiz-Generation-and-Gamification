@@ -322,6 +322,8 @@ export async function generateClassInsight(sessionId: string) {
             }
         });
 
+        console.log(session);
+
         if (!session) return { error: "Session not found." };
         if (session.classInsight) return { success: true, insight: session.classInsight }; // Already generated
         if (session.participants.length === 0) return { error: "No student data to analyze." };
@@ -360,7 +362,6 @@ export async function generateClassInsight(sessionId: string) {
         }
 
         // 4. Send to your Python Flask/Django Microservice
-        // Replace with your actual Python backend URL
         const pythonApiUrl = process.env.PYTHON_AI_URL || 'http://localhost:5000/api/insights';
 
         const aiResponse = await fetch(pythonApiUrl, {
