@@ -282,7 +282,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
               </div>
             </div>
 
-            <div className="w-full mb-4">
+            <div className="w-full max-w-sm mb-4">
               <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">
                 Quiz Language
               </label>
