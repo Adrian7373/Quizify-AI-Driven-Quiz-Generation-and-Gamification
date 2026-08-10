@@ -8,12 +8,12 @@ interface QuestionTypeSelector {
 }
 
 export default function QuizTypeSelector({ quizType, handleTypeChange }: QuestionTypeSelector) {
-    const options: QuizType[] = ['Multiple Choice', 'True/False', 'Identification'];
+    const options: QuizType[] = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'IDENTIFICATION', 'SHORT_ANSWER'];
 
     return (
         <>
             {/* The Segmented Control Container */}
-            <div className="flex shrink-0 w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
+            <div className="flex shrink-0 w-full max-w-lg rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
                 {options.map((option, index) => {
                     const isActive = quizType === option;
 
