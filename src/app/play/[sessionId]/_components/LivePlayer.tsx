@@ -61,6 +61,28 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         initPlayer();
     }, [sessionId, router, initialIndex]);
 
+    const currentQuestion = questions[currentIndex];
+
+    // 1. Reset timer when the teacher advances the question
+    useEffect(() => {
+        if (currentQuestion?.timeLimitSeconds) {
+            setTimeLeft(currentQuestion.timeLimitSeconds);
+        } else {
+            setTimeLeft(null);
+        }
+    }, [currentIndex, currentQuestion]);
+
+    // 2. Local countdown loop
+    useEffect(() => {
+        if (timeLeft === null || timeLeft <= 0 || hasAnswered || isWaiting) return;
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => (prev && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [timeLeft, hasAnswered, isWaiting]);
+
     // 2. Supabase Realtime: Listen for Teacher's Commands
     useEffect(() => {
         const channel = supabase
@@ -68,27 +90,36 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
             .on(
                 'postgres_changes',
                 {
-                    event: 'UPDATE',
+                    event: '*',
                     schema: 'public',
                     table: 'GameSession',
                     filter: `id=eq.${sessionId}`
                 },
                 (payload) => {
-                    const session = payload.new;
 
-                    // Handle Status Changes
-                    if (session.status === 'FINISHED') {
-                        setIsFinished(true);
-                    } else if (session.status === 'IN_PROGRESS') {
-                        setIsWaiting(false); // The host clicked Start Game!
+                    if (payload.eventType === 'DELETE') {
+                        toast.error("The host has cancelled the game.");
+                        window.location.href = "/join"; // Send them back to the home/join page
+                        return;
                     }
 
-                    // Handle Question Index Changes
-                    if (session.currentQuestionIndex > currentIndex) {
-                        setCurrentIndex(session.currentQuestionIndex);
-                        setHasAnswered(false);
-                        setSelectedAnswer(null);
-                        setQuestionStartTime(Date.now());
+                    if (payload.eventType === 'UPDATE') {
+                        const session = payload.new;
+
+                        // Handle Status Changes
+                        if (session.status === 'FINISHED') {
+                            setIsFinished(true);
+                        } else if (session.status === 'IN_PROGRESS') {
+                            setIsWaiting(false); // The host clicked Start Game!
+                        }
+
+                        // Handle Question Index Changes
+                        if (session.currentQuestionIndex > currentIndex) {
+                            setCurrentIndex(session.currentQuestionIndex);
+                            setHasAnswered(false);
+                            setSelectedAnswer(null);
+                            setQuestionStartTime(Date.now());
+                        }
                     }
                 }
             )
@@ -168,28 +199,6 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
             </div>
         );
     }
-
-    const currentQuestion = questions[currentIndex];
-
-    // 1. Reset timer when the teacher advances the question
-    useEffect(() => {
-        if (currentQuestion?.timeLimitSeconds) {
-            setTimeLeft(currentQuestion.timeLimitSeconds);
-        } else {
-            setTimeLeft(null);
-        }
-    }, [currentIndex, currentQuestion]);
-
-    // 2. Local countdown loop
-    useEffect(() => {
-        if (timeLeft === null || timeLeft <= 0 || hasAnswered || isWaiting) return;
-
-        const timer = setInterval(() => {
-            setTimeLeft(prev => (prev && prev > 0 ? prev - 1 : 0));
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [timeLeft, hasAnswered, isWaiting]);
 
     return (
         <div className="flex flex-col h-screen max-w-3xl mx-auto p-4 md:p-8">
