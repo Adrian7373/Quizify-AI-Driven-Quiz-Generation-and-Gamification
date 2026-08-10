@@ -7,6 +7,94 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id                 String        @id @default(uuid())
+  email              String        @unique
+  name               String?
+  role               Role          @default(TEACHER)
+  aiCredits          Int           @default(10)
+  createdAt          DateTime      @default(now())
+  hostedGames        GameSession[]
+  participantRecords Participant[]
+  quizzes            Quiz[]
+}
+
+model Quiz {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  creatorId   String
+  createdAt   DateTime      @default(now())
+  difficulty  String        @default("normal")
+  sessions    GameSession[]
+  questions   Question[]
+  creator     User          @relation(fields: [creatorId], references: [id])
+}
+
+model Question {
+  id               String       @id @default(uuid())
+  quizId           String
+  questionType     QuestionType @default(MULTIPLE_CHOICE)
+  questionText     String
+  options          Json         @default("[]")
+  correctAnswer    String
+  explanation      String       @default("")
+  timeLimitSeconds Int?
+  quiz             Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model GameSession {
+  id                   String        @id @default(uuid())
+  joinCode             String        @unique
+  quizId               String
+  hostId               String
+  mode                 GameMode
+  status               GameStatus    @default(WAITING)
+  currentQuestionIndex Int           @default(0)
+  createdAt            DateTime      @default(now())
+  expiresAt            DateTime?
+  classInsight         String?
+  host                 User          @relation(fields: [hostId], references: [id])
+  quiz                 Quiz          @relation(fields: [quizId], references: [id])
+  participants         Participant[]
+}
+
+model Participant {
+  id            String                @id @default(uuid())
+  sessionId     String
+  userId        String?
+  nickname      String
+  totalScore    Int                   @default(0)
+  currentStreak Int                   @default(0)
+  maxStreak     Int                   @default(0)
+  joinedAt      DateTime              @default(now())
+  session       GameSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user          User?                 @relation(fields: [userId], references: [id])
+  responses     ParticipantResponse[]
+}
+
+model ParticipantResponse {
+  id            String      @id @default(uuid())
+  participantId String
+  questionId    String
+  answerGiven   String
+  isCorrect     Boolean
+  timeTakenMs   Int
+  pointsEarned  Int         @default(0)
+  createdAt     DateTime    @default(now())
+  aiFeedback    String?
+  answerText    String?
+  score         Int?
+  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+}
+
+model AnonymousUsage {
+  fingerprint String   @id
+  count       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 enum Role {
   TEACHER
   STUDENT
@@ -16,109 +104,17 @@ enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
   IDENTIFICATION
-  FLASHCARD
+  SHORT_ANSWER
 }
 
 enum GameMode {
-  LIVE          // Synchronous Kahoot style (Time-based multipliers)
-  ASYNC         // Homework style (Streaks)
-  FLASHCARD_STUDY // Solo reviewer mode
+  LIVE
+  ASYNC
+  FLASHCARD_STUDY
 }
 
 enum GameStatus {
   WAITING
   IN_PROGRESS
   FINISHED
-}
-
-model User {
-  id            String        @id @default(uuid())
-  email         String        @unique
-  name          String?
-  role          Role          @default(TEACHER)
-  
-  // Credit System (Cost Control)
-  aiCredits     Int           @default(10) // Free tier default balance
-  
-  quizzes       Quiz[]
-  hostedGames   GameSession[]
-  participantRecords Participant[] // Connects guest plays to an account if logged in
-  createdAt     DateTime      @default(now())
-}
-
-model Quiz {
-  id          String        @id @default(uuid())
-  title       String
-  description String
-  difficulty  String   @default("normal")
-  creatorId   String
-  creator     User          @relation(fields: [creatorId], references: [id])
-  questions   Question[]
-  sessions    GameSession[]
-  createdAt   DateTime      @default(now())
-}
-
-model Question {
-  id            String       @id @default(uuid())
-  quizId        String
-  quiz          Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  type          QuestionType @default(MULTIPLE_CHOICE)
-  questionText  String
-  options       Json         @default("[]") // Empty for Identification & Flashcard
-  correctAnswer String
-  explanation   String       @default("")
-  timeLimitSeconds Int?
-}
-
-model GameSession {
-  id                   String        @id @default(uuid())
-  joinCode             String        @unique // e.g. "849201"
-  quizId               String
-  quiz                 Quiz          @relation(fields: [quizId], references: [id])
-  hostId               String
-  host                 User          @relation(fields: [hostId], references: [id])
-  mode                 GameMode
-  status               GameStatus    @default(WAITING)
-  currentQuestionIndex Int           @default(0)
-  participants         Participant[]
-  createdAt            DateTime      @default(now())
-  expiresAt            DateTime?
-  classInsight  String?   @db.Text
-}
-
-model Participant {
-  id            String                @id @default(uuid())
-  sessionId     String
-  session       GameSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  
-  // Optional link to account (null for anonymous guests)
-  userId        String?
-  user          User?                 @relation(fields: [userId], references: [id])
-  
-  nickname      String
-  totalScore    Int                   @default(0)
-  currentStreak Int                   @default(0) // Tracks consecutive correct answers in ASYNC mode
-  maxStreak     Int                   @default(0)
-  
-  responses     ParticipantResponse[]
-  joinedAt      DateTime              @default(now())
-}
-
-model ParticipantResponse {
-  id            String      @id @default(uuid())
-  participantId String
-  participant   Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  questionId    String
-  answerGiven   String
-  isCorrect     Boolean
-  timeTakenMs   Int         // Used to calculate time multipliers in LIVE mode
-  pointsEarned  Int         @default(0)
-  createdAt     DateTime    @default(now())
-}
-
-model AnonymousUsage {
-  fingerprint String   @id // The unique hardware ID
-  count       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }
