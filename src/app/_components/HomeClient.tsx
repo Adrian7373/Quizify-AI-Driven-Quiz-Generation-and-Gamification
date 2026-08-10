@@ -25,7 +25,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
   //Data state
   const [quizData, setQuizData] = useState<QuizData | null>(null)
   const [selectedOption, setSelectedOption] = useState<InputOption>('Text');
-  const [selectedType, setSelectedType] = useState<QuizType>("Multiple Choice")
+  const [selectedType, setSelectedType] = useState<QuizType>("MULTIPLE_CHOICE")
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [textInput, setTextInput] = useState("");
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
