@@ -184,7 +184,10 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         });
 
         if (!flaskRes.ok) {
-            throw new Error('Flask AI microservice failed to generate quiz');
+            // NEW: Read the exact error Flask sent back
+            const errorPayload = await flaskRes.json();
+            console.error("FLASK REJECTED REQUEST:", errorPayload);
+            throw new Error(`Flask API Error: ${errorPayload.error}`);
         }
 
         try {
@@ -217,6 +220,7 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
                         create: quizData.questions.map((question: Question) => ({
                             questionText: question.questionText,
                             options: question.options,
+                            questionType: quizType,
                             correctAnswer: question.correctAnswer,
                             explanation: question.explanation,
                             timeLimitSeconds: question.timeLimitSeconds
