@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { joinGameSession } from "./actions";
 import { Loader2 } from "lucide-react";
 import Logo from "@/app/_components/Logo";
@@ -9,12 +9,23 @@ import Logo from "@/app/_components/Logo";
 export default function JoinPage() {
     const router = useRouter();
 
+    const searchParams = useSearchParams();
+    const urlPin = searchParams.get("pin") || "";
+
+    const [pin, setPin] = useState(urlPin);
     const [step, setStep] = useState<1 | 2>(1);
-    const [pin, setPin] = useState("");
     const [nickname, setNickname] = useState("");
 
     const [error, setError] = useState("");
     const [isJoining, setIsJoining] = useState(false);
+
+    useEffect(() => {
+        if (urlPin) {
+            document.getElementById("nickname-input")?.focus();
+        } else {
+            document.getElementById("pin-input")?.focus();
+        }
+    }, [urlPin]);
 
     const handlePinSubmit = (e: React.FormEvent) => {
         e.preventDefault();
