@@ -4,7 +4,7 @@ import HomeClient from "./_components/HomeClient";
 
 // Export your types here so other components can still import them from "@/app/page"
 export type InputOption = 'File' | 'Text' | 'Image';
-export type QuizType = 'Multiple Choice' | 'True/False' | 'Identification';
+export type QuizType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'IDENTIFICATION' | 'SHORT_ANSWER';
 export type DifficultyType = "easy" | "normal" | "hard"
 
 export interface Question {
