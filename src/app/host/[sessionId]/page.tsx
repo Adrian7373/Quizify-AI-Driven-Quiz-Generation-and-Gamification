@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import HostLobbyClient from "./_components/HostLobbyClient";
+import { createClient } from "@/utils/supabase/server";
 
 interface HostPageProps {
     params: Promise<{ sessionId: string }>;
@@ -8,10 +9,16 @@ interface HostPageProps {
 
 export default async function HostPage({ params }: HostPageProps) {
     const { sessionId } = await params;
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        redirect("/login")
+    }
 
     // 1. Fetch initial state using Prisma!
-    const session = await prisma.gameSession.findUnique({
-        where: { id: sessionId },
+    const session = await prisma.gameSession.findFirst({
+        where: { id: sessionId, hostId: user.id },
         include: {
             quiz: { select: { title: true } },
             participants: { select: { id: true, nickname: true } }
@@ -29,6 +36,7 @@ export default async function HostPage({ params }: HostPageProps) {
             joinCode={session.joinCode}
             quizTitle={session.quiz.title}
             initialParticipants={session.participants}
+            hostId={user.id}
         />
     );
 }
