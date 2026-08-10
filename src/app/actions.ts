@@ -263,7 +263,7 @@ export async function createQuizFromBank(userId: string, title: string, descript
                         options: q.options || [],
                         correctAnswer: q.correctAnswer,
                         explanation: q.explanation,
-                        type: q.type,
+                        questionType: q.questionType,
                         timeLimitSeconds: q.timeLimitSeconds
                     }))
                 }
@@ -274,5 +274,66 @@ export async function createQuizFromBank(userId: string, title: string, descript
     } catch (error) {
         console.error("Failed to create quiz from bank:", error);
         return { error: "An error occurred while creating your combined quiz." };
+    }
+}
+
+//Grade participant/student's answer with AI
+export async function submitAndGradeShortAnswer(
+    participantId: string,
+    questionId: string,
+    studentAnswer: string,
+    language: string = "English",
+    timeTakenMs: number,
+) {
+    try {
+        // 1. Fetch the question to get the rubric/correct answer
+        const question = await prisma.question.findUnique({
+            where: { id: questionId }
+        });
+
+        if (!question) return { error: "Question not found." };
+
+        // 2. Call the Flask Microservice
+        const pythonApiUrl = process.env.PYTHON_AI_URL || 'http://localhost:5000/api/grade-answer';
+
+        const aiResponse = await fetch(pythonApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                questionText: question.questionText,
+                rubric: question.correctAnswer,
+                studentAnswer: studentAnswer,
+                language: language
+            })
+        });
+
+        if (!aiResponse.ok) throw new Error("Grading engine failed.");
+        const gradedData = await aiResponse.json();
+
+        // 3. Save the result to the database
+        const savedResponse = await prisma.participantResponse.create({
+            data: {
+                participantId: participantId,
+                questionId: questionId,
+                answerText: studentAnswer,
+                answerGiven: studentAnswer,
+                isCorrect: gradedData.is_correct,
+                aiFeedback: gradedData.feedback,
+                score: gradedData.score,
+                timeTakenMs: timeTakenMs
+            }
+        });
+
+        // 4. Return the feedback to the student's screen instantly
+        return {
+            success: true,
+            isCorrect: gradedData.is_correct,
+            score: gradedData.score,
+            feedback: gradedData.feedback
+        };
+
+    } catch (error) {
+        console.error("Grading error:", error);
+        return { error: "Failed to grade response." };
     }
 }
