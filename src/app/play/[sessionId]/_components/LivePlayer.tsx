@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Loader2, Trophy, Clock, CheckCircle2, Timer } from "lucide-react";
 import toast from "react-hot-toast";
 import { submitAnswer, getParticipantProgress } from "../actions";
+import { submitAndGradeShortAnswer } from "@/app/actions";
 
 interface LivePlayerProps {
     sessionId: string;
@@ -18,7 +19,15 @@ interface LivePlayerProps {
 export default function LivePlayer({ sessionId, quizTitle, initialStatus, questions, initialIndex }: LivePlayerProps) {
     const router = useRouter();
     const supabase = createClient();
+
+    // ==========================================
+    // 1. ALL STATE HOOKS (Must be at the very top)
+    // ==========================================
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+    // AI grading state
+    const [isGrading, setIsGrading] = useState(false);
+    const [aiResult, setAiResult] = useState<{ feedback: string, score: number } | null>(null);
 
     const [participantId, setParticipantId] = useState<string | null>(null);
     const [isLoadingProgress, setIsLoadingProgress] = useState(true);
@@ -30,11 +39,17 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
     // Player Stats
     const [score, setScore] = useState(0);
+    const [streak, setStreak] = useState(0); // Added missing streak state
 
     // Local Question State
     const [hasAnswered, setHasAnswered] = useState(false);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // Added missing isCorrect state
+
+    // ==========================================
+    // 2. ALL USE-EFFECT HOOKS
+    // ==========================================
 
     // 1. Authenticate & Rehydrate
     useEffect(() => {
@@ -63,7 +78,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
     const currentQuestion = questions[currentIndex];
 
-    // 1. Reset timer when the teacher advances the question
+    // 2. Reset timer when the teacher advances the question
     useEffect(() => {
         if (currentQuestion?.timeLimitSeconds) {
             setTimeLeft(currentQuestion.timeLimitSeconds);
@@ -72,7 +87,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         }
     }, [currentIndex, currentQuestion]);
 
-    // 2. Local countdown loop
+    // 3. Local countdown loop
     useEffect(() => {
         if (timeLeft === null || timeLeft <= 0 || hasAnswered || isWaiting) return;
 
@@ -83,7 +98,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         return () => clearInterval(timer);
     }, [timeLeft, hasAnswered, isWaiting]);
 
-    // 2. Supabase Realtime: Listen for Teacher's Commands
+    // 4. Supabase Realtime: Listen for Teacher's Commands
     useEffect(() => {
         const channel = supabase
             .channel('live-game-sync')
@@ -99,7 +114,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
                     if (payload.eventType === 'DELETE') {
                         toast.error("The host has cancelled the game.");
-                        window.location.href = "/join"; // Send them back to the home/join page
+                        window.location.href = "/join";
                         return;
                     }
 
@@ -116,8 +131,12 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
                         // Handle Question Index Changes
                         if (session.currentQuestionIndex > currentIndex) {
                             setCurrentIndex(session.currentQuestionIndex);
+                            // Reset local states for the new question!
                             setHasAnswered(false);
                             setSelectedAnswer(null);
+                            setIsCorrect(null);
+                            setIsGrading(false);
+                            setAiResult(null);
                             setQuestionStartTime(Date.now());
                         }
                     }
@@ -130,21 +149,59 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         };
     }, [sessionId, currentIndex, supabase]);
 
+    // ==========================================
+    // 3. HANDLERS
+    // ==========================================
+
+    const handleShortAnswerSubmit = async () => {
+        if (!selectedAnswer || selectedAnswer.trim() === '') return;
+
+        setHasAnswered(true);
+        setIsGrading(true);
+
+        const timeTakenMs = Date.now() - questionStartTime;
+
+        const response = await submitAndGradeShortAnswer(
+            participantId!,
+            currentQuestion.id,
+            selectedAnswer,
+            "English",
+            timeTakenMs,
+        );
+
+        setIsGrading(false);
+
+        if (response.success) {
+            setIsCorrect(response.isCorrect);
+            setAiResult({ feedback: response.feedback, score: response.score });
+
+            if (response.isCorrect) {
+                setStreak(prev => prev + 1);
+                setScore(prev => prev + response.score * 100);
+            } else {
+                setStreak(0);
+            }
+        } else {
+            toast.error("Failed to grade response.");
+            setHasAnswered(false);
+        }
+    };
+
     const handleAnswerClick = async (answer: string) => {
         if (hasAnswered || !participantId || timeLeft === 0) return;
 
         const timeTakenMs = Date.now() - questionStartTime;
-        const currentQuestion = questions[currentIndex];
-        const isCorrect = answer === currentQuestion.correctAnswer;
+        const isAnswerCorrect = answer === currentQuestion.correctAnswer;
 
         setHasAnswered(true);
         setSelectedAnswer(answer);
+        setIsCorrect(isAnswerCorrect);
 
         const response = await submitAnswer(
             participantId,
             currentIndex.toString(),
             answer,
-            isCorrect,
+            isAnswerCorrect,
             timeTakenMs
         );
 
@@ -153,9 +210,13 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         }
     };
 
+    // ==========================================
+    // 4. RENDER (Early Returns & UI)
+    // ==========================================
+
     if (!participantId || isLoadingProgress) {
         return (
-            <div className="flex h-screen flex-col items-center justify-center gap-4">
+            <div className="flex h-screen flex-col items-center justify-center gap-4 bg-slate-900">
                 <Loader2 className="w-10 h-10 text-[#4ce0a3] animate-spin" />
                 <p className="text-slate-400 font-semibold animate-pulse">Syncing with host...</p>
             </div>
@@ -164,7 +225,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
     if (isFinished) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen p-6 animate-in fade-in zoom-in duration-500">
+            <div className="flex flex-col items-center justify-center h-screen p-6 bg-slate-900 animate-in fade-in zoom-in duration-500">
                 <div className="bg-white p-10 rounded-2xl shadow-2xl text-center max-w-md w-full">
                     <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
                     <h1 className="text-3xl font-black text-slate-800 mb-2">Game Over!</h1>
@@ -223,7 +284,8 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
             </div>
 
             {/* Stage Area */}
-            {hasAnswered ? (
+            {hasAnswered && !isGrading && !aiResult ? (
+                // NORMAL MC/TF WAITING SCREEN
                 <div className="flex-1 flex flex-col justify-center items-center bg-slate-800/50 rounded-2xl border-2 border-slate-700 p-8 animate-in fade-in">
                     <CheckCircle2 className="w-20 h-20 text-[#4ce0a3] mb-4" />
                     <h2 className="text-3xl font-bold text-white mb-2">Answer Submitted!</h2>
@@ -232,7 +294,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
                     </p>
                 </div>
             ) : timeLeft === 0 ? (
-                // NEW: Time's Up View (Shown if time runs out before the host officially advances)
+                // TIME'S UP SCREEN
                 <div className="flex-1 flex flex-col justify-center items-center bg-rose-500/10 rounded-2xl border-2 border-rose-500/30 p-8 animate-in fade-in">
                     <Timer className="w-20 h-20 text-rose-400 mb-4" />
                     <h2 className="text-3xl font-bold text-white mb-2">Time's Up!</h2>
@@ -246,17 +308,75 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
                         </h2>
                     </div>
 
-                    <div className={`grid gap-4 shrink-0 ${currentQuestion.options?.length > 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                        {currentQuestion.options?.map((option: string, idx: number) => (
-                            <button
-                                key={idx}
-                                onClick={() => handleAnswerClick(option)}
-                                className="p-6 rounded-xl font-bold text-lg md:text-xl transition-all duration-200 border-2 bg-white text-slate-700 hover:bg-slate-100 border-slate-200 border-b-4 active:border-b-0 active:translate-y-1"
-                            >
-                                {option}
-                            </button>
-                        ))}
-                    </div>
+                    {/* Check if it's a Short Answer question */}
+                    {currentQuestion.type === 'Short Answer' ? (
+                        <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto mt-6">
+
+                            <textarea
+                                value={selectedAnswer || ''}
+                                onChange={(e) => !hasAnswered && setSelectedAnswer(e.target.value)}
+                                disabled={hasAnswered}
+                                placeholder="Type your essay or short answer here..."
+                                className="w-full min-h-[160px] p-5 rounded-2xl border-2 border-slate-200 focus:border-[#4ce0a3] bg-white text-slate-700 disabled:opacity-70 disabled:bg-slate-50 resize-y outline-none font-medium text-lg transition-colors"
+                            />
+
+                            {!hasAnswered && (
+                                <button
+                                    onClick={handleShortAnswerSubmit}
+                                    className="bg-slate-900 text-white font-black py-4 px-8 rounded-xl hover:bg-slate-800 transition-transform hover:scale-105 self-end w-full sm:w-auto"
+                                >
+                                    Submit Answer
+                                </button>
+                            )}
+
+                            {isGrading && (
+                                <div className="bg-indigo-50 border-2 border-indigo-100 p-6 rounded-xl flex items-center justify-center gap-4 animate-pulse">
+                                    <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                                    <span className="text-indigo-800 font-bold text-lg">AI is evaluating your response...</span>
+                                </div>
+                            )}
+
+                            {hasAnswered && !isGrading && aiResult && (
+                                <div className={`mt-2 p-6 md:p-8 rounded-2xl border-2 animate-in slide-in-from-bottom-4 duration-500 ${isCorrect ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h3 className={`font-black text-2xl ${isCorrect ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                                {isCorrect ? 'Great Concept Mastery!' : 'Room for Improvement'}
+                                            </h3>
+                                        </div>
+
+                                        <div className="bg-white px-5 py-3 rounded-xl font-black shadow-sm text-slate-700 border border-slate-200 text-xl flex items-baseline gap-1 shrink-0">
+                                            {aiResult.score} <span className="text-slate-400 text-sm font-bold">/ 10</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white/60 p-5 rounded-xl border border-white">
+                                        <span className="font-bold text-xs uppercase tracking-widest block mb-2 opacity-60">Teacher's Insight</span>
+                                        <p className="text-slate-700 leading-relaxed font-medium">
+                                            {aiResult.feedback}
+                                        </p>
+                                    </div>
+
+                                    <p className="text-slate-500 flex items-center gap-2 mt-6 justify-center">
+                                        <Clock className="w-5 h-5 animate-pulse" /> Waiting for host to advance...
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className={`grid gap-4 shrink-0 ${currentQuestion.options?.length > 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                            {currentQuestion.options?.map((option: string, idx: number) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleAnswerClick(option)}
+                                    disabled={hasAnswered}
+                                    className="p-6 rounded-xl font-bold text-lg md:text-xl transition-all duration-200 border-2 bg-white text-slate-700 hover:bg-slate-100 border-slate-200 border-b-4 active:border-b-0 active:translate-y-1 disabled:opacity-50"
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </>
             )}
         </div>
