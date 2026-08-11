@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Loader2, Trophy, Clock, CheckCircle2, Timer } from "lucide-react";
 import toast from "react-hot-toast";
 import { submitAnswer, getParticipantProgress } from "../actions";
-import { submitAndGradeShortAnswer } from "@/app/actions";
+import { submitAndGradeEssay } from "@/app/actions";
 
 interface LivePlayerProps {
     sessionId: string;
@@ -161,7 +161,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
         const timeTakenMs = Date.now() - questionStartTime;
 
-        const response = await submitAndGradeShortAnswer(
+        const response = await submitAndGradeEssay(
             participantId!,
             currentQuestion.id,
             selectedAnswer,
@@ -177,7 +177,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
 
             if (response.isCorrect) {
                 setStreak(prev => prev + 1);
-                setScore(prev => prev + response.score * 100);
+                setScore(prev => prev + (response.pointsEarned || 0));
             } else {
                 setStreak(0);
             }
@@ -309,7 +309,7 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
                     </div>
 
                     {/* Check if it's a Short Answer question */}
-                    {currentQuestion.type === 'Short Answer' ? (
+                    {currentQuestion.questionType === 'ESSAY' ? (
                         <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto mt-6">
 
                             <textarea
