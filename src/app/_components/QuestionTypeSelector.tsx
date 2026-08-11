@@ -8,7 +8,7 @@ interface QuestionTypeSelector {
 }
 
 export default function QuizTypeSelector({ quizType, handleTypeChange }: QuestionTypeSelector) {
-    const options: QuizType[] = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'IDENTIFICATION', 'SHORT_ANSWER'];
+    const options: QuizType[] = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'IDENTIFICATION', 'ESSAY'];
 
     return (
         <>
