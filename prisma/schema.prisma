@@ -104,7 +104,7 @@ enum QuestionType {
   MULTIPLE_CHOICE
   TRUE_FALSE
   IDENTIFICATION
-  SHORT_ANSWER
+  ESSAY
 }
 
 enum GameMode {
