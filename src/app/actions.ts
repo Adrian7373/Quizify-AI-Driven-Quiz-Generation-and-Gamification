@@ -278,7 +278,7 @@ export async function createQuizFromBank(userId: string, title: string, descript
 }
 
 //Grade participant/student's answer with AI
-export async function submitAndGradeShortAnswer(
+export async function submitAndGradeEssay(
     participantId: string,
     questionId: string,
     studentAnswer: string,
@@ -311,24 +311,48 @@ export async function submitAndGradeShortAnswer(
         const gradedData = await aiResponse.json();
 
         // 3. Save the result to the database
-        const savedResponse = await prisma.participantResponse.create({
-            data: {
-                participantId: participantId,
-                questionId: questionId,
-                answerText: studentAnswer,
-                answerGiven: studentAnswer,
-                isCorrect: gradedData.is_correct,
-                aiFeedback: gradedData.feedback,
-                score: gradedData.score,
-                timeTakenMs: timeTakenMs
-            }
-        });
+        let pointsEarned = 0;
+
+        if (gradedData.is_correct) {
+            const basePoints = 1000;
+            const timeLimit = question.timeLimitSeconds || 60;
+
+            // 1. Accuracy Multiplier: If they got 8/10, they get 80% of the base points (800)
+            const accuracyMultiplier = gradedData.score / 10;
+
+            // 2. Speed Bonus: Up to 500 extra points based on how fast they typed
+            const timeRatio = Math.max(0, 1 - (timeTakenMs / 1000 / timeLimit));
+            const speedBonus = timeRatio * 500;
+
+            pointsEarned = Math.round((basePoints * accuracyMultiplier) + speedBonus);
+        }
+
+        // Save the response AND update the participant's total score in one transaction
+        await prisma.$transaction([
+            prisma.participantResponse.create({
+                data: {
+                    participantId: participantId,
+                    questionId: questionId,
+                    answerGiven: studentAnswer,
+                    answerText: studentAnswer,
+                    timeTakenMs: timeTakenMs,
+                    isCorrect: gradedData.is_correct,
+                    aiFeedback: gradedData.feedback,
+                    score: gradedData.score
+                }
+            }),
+            prisma.participant.update({
+                where: { id: participantId },
+                data: { totalScore: { increment: pointsEarned } }
+            })
+        ]);
 
         // 4. Return the feedback to the student's screen instantly
         return {
             success: true,
             isCorrect: gradedData.is_correct,
-            score: gradedData.score,
+            score: gradedData.score, // The 0-10 grade
+            pointsEarned: pointsEarned, // The actual 0-1500 game score!
             feedback: gradedData.feedback
         };
 
