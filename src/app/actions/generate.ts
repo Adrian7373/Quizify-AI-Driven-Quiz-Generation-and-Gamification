@@ -184,7 +184,6 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         });
 
         if (!flaskRes.ok) {
-            // NEW: Read the exact error Flask sent back
             const errorPayload = await flaskRes.json();
             console.error("FLASK REJECTED REQUEST:", errorPayload);
             throw new Error(`Flask API Error: ${errorPayload.error}`);
@@ -280,7 +279,7 @@ export async function createAsyncSession(quizId: string, hostId: string, expires
 }
 
 //Create live game session
-export async function createLiveSession(quizId: string, hostId: string) {
+export async function createLiveSession(quizId: string, hostId: string, maxFactions: number) {
     try {
         let joinCode = "";
         let isUnique = false;
@@ -302,6 +301,8 @@ export async function createLiveSession(quizId: string, hostId: string) {
                 mode: "LIVE",
                 status: "WAITING", // Starts in waiting room
                 currentQuestionIndex: 0,
+
+                maxFactions: maxFactions,
             }
         });
 
