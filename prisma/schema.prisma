@@ -57,6 +57,18 @@ model GameSession {
   host                 User          @relation(fields: [hostId], references: [id])
   quiz                 Quiz          @relation(fields: [quizId], references: [id])
   participants         Participant[]
+  maxFactions Int       @default(4) // Host decides this upon creation
+  factions    Faction[]
+}
+
+model Faction {
+  id          String   @id @default(uuid())
+  name        String
+  sessionId   String
+  leaderId    String   @unique // The participantId of the first joiner
+  
+  session     GameSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  members     Participant[]
 }
 
 model Participant {
@@ -71,6 +83,8 @@ model Participant {
   session       GameSession           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   user          User?                 @relation(fields: [userId], references: [id])
   responses     ParticipantResponse[]
+  factionId   String?
+  faction     Faction? @relation(fields: [factionId], references: [id], onDelete: SetNull)
 }
 
 model ParticipantResponse {
