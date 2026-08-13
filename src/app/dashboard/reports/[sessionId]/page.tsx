@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
 import Link from "next/link";
-import { ArrowLeft, Trophy, Users, Target, Flame } from "lucide-react";
+import { ArrowLeft, Trophy, Users, Target, Flame, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
-import AiInsightsCard from "./_components/AiInsightsCard"; // 1. Added Import
+import AiInsightsCard from "./_components/AiInsightsCard";
+import toast from "react-hot-toast";
+import ExportCsvButton from "./_components/ExportCsvButton";
 
 interface ReportPageProps {
     params: Promise<{ sessionId: string }>;
@@ -43,6 +45,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
                 include: {
                     responses: {
                         select: { isCorrect: true, questionId: true } // We need this to calculate accuracy
+                    },
+                    faction: {
+                        select: { name: true }
                     }
                 }
             }
@@ -64,6 +69,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
         ? Math.max(...session.participants.map(p => p.maxStreak))
         : 0;
 
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-inter">
             <NavBar user={appUser} />
@@ -75,11 +81,14 @@ export default async function ReportPage({ params }: ReportPageProps) {
                         <ArrowLeft className="w-4 h-4" /> Back to Dashboard
                     </Link>
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-900">{session.quiz.title}</h1>
-                            <p className="text-slate-500 mt-1">
-                                Session Report • Hosted on {format(new Date(session.createdAt), 'MMM d, yyyy')}
-                            </p>
+                        <div className="flex gap-5">
+                            <div>
+                                <h1 className="text-Nick3xl font-bold text-slate-900">{session.quiz.title}</h1>
+                                <p className="text-slate-500 mt-1">
+                                    Session Report • Hosted on {format(new Date(session.createdAt), 'MMM d, yyyy')}
+                                </p>
+                            </div>
+                            <ExportCsvButton quizTitle={session.quiz.title} participants={session.participants} />
                         </div>
                         <div className="bg-white border border-slate-200 px-4 py-2 rounded-lg text-center shrink-0">
                             <p className="text-xs font-bold text-slate-400 uppercase">Game PIN</p>
@@ -149,6 +158,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
                                         <th className="px-6 py-4 font-semibold text-right">Points</th>
                                         <th className="px-6 py-4 font-semibold text-center text-slate-800 bg-slate-100">Score</th>
                                         <th className="px-6 py-4 font-semibold text-center">Accuracy</th>
+                                        <th className="px-6 py-4 font-semibold text-center">Faction</th>
                                         <th className="px-6 py-4 font-semibold text-center">Best Streak</th>
                                     </tr>
                                 </thead>
@@ -186,6 +196,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
                                                         }`}>
                                                         {accuracy}%
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center text-sm font-bold text-slate-500">
+                                                    {participant.faction?.name || "-"}
                                                 </td>
                                                 <td className="px-6 py-4 text-center font-bold text-slate-600">
                                                     {participant.maxStreak} <Flame className="w-4 h-4 inline text-orange-400 pb-1" />
