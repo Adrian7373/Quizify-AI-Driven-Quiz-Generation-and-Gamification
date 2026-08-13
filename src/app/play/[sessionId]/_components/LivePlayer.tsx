@@ -19,10 +19,6 @@ interface LivePlayerProps {
 export default function LivePlayer({ sessionId, quizTitle, initialStatus, questions, initialIndex }: LivePlayerProps) {
     const router = useRouter();
     const supabase = createClient();
-
-    // ==========================================
-    // 1. ALL STATE HOOKS (Must be at the very top)
-    // ==========================================
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
     // AI grading state
@@ -47,9 +43,9 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // Added missing isCorrect state
 
-    // ==========================================
-    // 2. ALL USE-EFFECT HOOKS
-    // ==========================================
+    //Offline resiliense states
+    const [isOffline, setIsOffline] = useState(false);
+    const [syncing, setSyncing] = useState(false);
 
     // 1. Authenticate & Rehydrate
     useEffect(() => {
@@ -149,41 +145,120 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         };
     }, [sessionId, currentIndex, supabase]);
 
-    // ==========================================
-    // 3. HANDLERS
-    // ==========================================
+    useEffect(() => {
+        // Set initial status
+        setIsOffline(!navigator.onLine);
+
+        const handleOnline = async () => {
+            setIsOffline(false);
+            setSyncing(true);
+
+            try {
+                const queue = JSON.parse(localStorage.getItem(`offline_queue_${sessionId}`) || "[]");
+
+                if (queue.length > 0) {
+                    toast.loading("Syncing offline answers...");
+
+                    for (const payload of queue) {
+                        if (payload.type === 'MCQ') {
+                            await submitAnswer(
+                                payload.participantId,
+                                payload.questionIndex,
+                                payload.answer,
+                                payload.isCorrect,
+                                payload.timeTakenMs
+                            );
+                        } else if (payload.type === 'ESSAY') {
+                            // Essays grade in the background when reconnected
+                            await submitAndGradeEssay(
+                                payload.participantId,
+                                payload.questionId,
+                                payload.answer,
+                                "English",
+                                payload.timeTakenMs
+                            );
+                        }
+                    }
+
+                    // Clear queue after successful sync
+                    localStorage.removeItem(`offline_queue_${sessionId}`);
+                    toast.dismiss();
+                    toast.success("All answers synced!");
+                }
+            } catch (error) {
+                console.error("Failed to sync offline queue:", error);
+            } finally {
+                setSyncing(false);
+            }
+        };
+
+        const handleOffline = () => setIsOffline(true);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [sessionId]);
+
 
     const handleShortAnswerSubmit = async () => {
         if (!selectedAnswer || selectedAnswer.trim() === '') return;
 
         setHasAnswered(true);
-        setIsGrading(true);
-
         const timeTakenMs = Date.now() - questionStartTime;
 
-        const response = await submitAndGradeEssay(
-            participantId!,
-            currentQuestion.id,
-            selectedAnswer,
-            "English",
-            timeTakenMs,
-        );
+        const payload = {
+            type: 'ESSAY',
+            participantId: participantId!,
+            questionId: currentQuestion.id,
+            answer: selectedAnswer,
+            timeTakenMs
+        };
 
-        setIsGrading(false);
+        if (!navigator.onLine) {
+            // OFFLINE: Queue it up and show a pending state
+            const queue = JSON.parse(localStorage.getItem(`offline_queue_${sessionId}`) || "[]");
+            queue.push(payload);
+            localStorage.setItem(`offline_queue_${sessionId}`, JSON.stringify(queue));
+            setAiResult({ feedback: "Answer saved offline. Will be graded by AI once connection restores.", score: 0 });
+            return;
+        }
 
-        if (response.success) {
-            setIsCorrect(response.isCorrect);
-            setAiResult({ feedback: response.feedback, score: response.score });
+        // ONLINE: Normal AI Grading
+        setIsGrading(true);
+        try {
+            const response = await submitAndGradeEssay(
+                participantId!,
+                currentQuestion.id,
+                selectedAnswer,
+                "English",
+                timeTakenMs,
+            );
 
-            if (response.isCorrect) {
-                setStreak(prev => prev + 1);
-                setScore(prev => prev + (response.pointsEarned || 0));
+            setIsGrading(false);
+
+            if (response.success) {
+                setIsCorrect(response.isCorrect);
+                setAiResult({ feedback: response.feedback, score: response.score });
+                if (response.isCorrect) {
+                    setStreak(prev => prev + 1);
+                    setScore(prev => prev + (response.pointsEarned || 0));
+                } else {
+                    setStreak(0);
+                }
             } else {
-                setStreak(0);
+                toast.error("Failed to grade response.");
+                setHasAnswered(false);
             }
-        } else {
-            toast.error("Failed to grade response.");
-            setHasAnswered(false);
+        } catch (error) {
+            setIsGrading(false);
+            const queue = JSON.parse(localStorage.getItem(`offline_queue_${sessionId}`) || "[]");
+            queue.push(payload);
+            localStorage.setItem(`offline_queue_${sessionId}`, JSON.stringify(queue));
+            setAiResult({ feedback: "Network dropped. Answer saved offline and will be graded later.", score: 0 });
         }
     };
 
@@ -197,22 +272,51 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
         setSelectedAnswer(answer);
         setIsCorrect(isAnswerCorrect);
 
-        const response = await submitAnswer(
-            participantId,
-            currentIndex.toString(),
-            answer,
-            isAnswerCorrect,
-            timeTakenMs
-        );
+        // Optimistically update score assuming it will sync
+        if (isAnswerCorrect) {
+            // Give base points optimistically (backend will calculate exact points later)
+            setScore(prev => prev + 1000);
+        }
 
-        if (response.success) {
-            setScore(prev => prev + (response.pointsEarned || 0));
+        const payload = {
+            type: 'MCQ',
+            participantId,
+            questionIndex: currentIndex.toString(),
+            answer,
+            isCorrect: isAnswerCorrect,
+            timeTakenMs
+        };
+
+        if (!navigator.onLine) {
+            // OFFLINE: Save to queue
+            const queue = JSON.parse(localStorage.getItem(`offline_queue_${sessionId}`) || "[]");
+            queue.push(payload);
+            localStorage.setItem(`offline_queue_${sessionId}`, JSON.stringify(queue));
+            toast.success("Saved offline. Will sync when reconnected.");
+            return;
+        }
+
+        // ONLINE: Normal submission
+        try {
+            const response = await submitAnswer(
+                participantId,
+                currentIndex.toString(),
+                answer,
+                isAnswerCorrect,
+                timeTakenMs
+            );
+            if (response.success && response.pointsEarned) {
+                // Correct optimistic score with actual calculated score
+                setScore(prev => (prev - 1000) + response.pointsEarned!);
+            }
+        } catch (error) {
+            // Fallback if the network drops exactly during the request
+            const queue = JSON.parse(localStorage.getItem(`offline_queue_${sessionId}`) || "[]");
+            queue.push(payload);
+            localStorage.setItem(`offline_queue_${sessionId}`, JSON.stringify(queue));
         }
     };
 
-    // ==========================================
-    // 4. RENDER (Early Returns & UI)
-    // ==========================================
 
     if (!participantId || isLoadingProgress) {
         return (
@@ -282,6 +386,16 @@ export default function LivePlayer({ sessionId, quizTitle, initialStatus, questi
                     Score: <span className="text-[#4ce0a3]">{score}</span>
                 </div>
             </div>
+            {/* OFFLINE BANNER */}
+            {isOffline && (
+                <div className="bg-amber-500 text-amber-950 font-bold px-4 py-2 rounded-xl mb-4 flex items-center justify-center gap-2 animate-in slide-in-from-top-4">
+                    <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-100 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                    </span>
+                    You are offline. Answers are being saved locally!
+                </div>
+            )}
 
             {/* Stage Area */}
             {hasAnswered && !isGrading && !aiResult ? (
