@@ -9,6 +9,7 @@ import { formatDistanceToNow, format } from "date-fns";
 import EndSessionButton from "./_components/EndSessionButton";
 import ActiveLiveWidget from "../_components/ActiveLiveWidget";
 import DeleteSessionButton from "./_components/DeleteSessionButton";
+import GenerateNewButton from "./_components/GenerateNewButton";
 
 interface DashboardProps {
     searchParams: Promise<{ tab?: string }>;
@@ -102,14 +103,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                             <span className="whitespace-nowrap">Question Bank</span>
                         </Link>
 
-                        {/* Removed 'hidden', added responsive flex/text sizing */}
-                        <Link
-                            href="/"
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900 font-bold text-sm sm:text-base px-3 sm:px-5 py-2.5 rounded-xl transition-colors shrink-0"
-                        >
-                            <BrainCircuit className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                            <span className="whitespace-nowrap">Generate New</span>
-                        </Link>
+                        <GenerateNewButton userId={authUser.id} />
                     </div>
                 </div>
 
