@@ -106,7 +106,7 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                             <hr />
                             <div className="flex flex-col h-140 overflow-y-auto text-white gap-3 py-3">
                                 {user ? (
-                                    user.quizzes.map((quiz) => {
+                                    [...user.quizzes].reverse().map((quiz) => {
                                         // AUTHENTICATED CHECK: Does the URL match this quiz?
                                         const isActive = pathname === `/quiz/${quiz.id}`;
 
