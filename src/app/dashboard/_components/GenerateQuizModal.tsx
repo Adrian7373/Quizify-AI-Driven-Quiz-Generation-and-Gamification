@@ -211,10 +211,6 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                         {selectedOption === "Image" && (
                             <span className="absolute top-4 right-4 text-xs font-bold text-slate-400 z-10">Max {MAX_IMAGE_SIZE_MB}MB</span>
                         )}
-
-                        <div hidden={selectedOption !== "File"} className="w-full h-full">
-                            <FileDropzone handleRemoveFile={handleRemoveFile} file={uploadedFile} handleUploadFile={handleUploadFile} />
-                        </div>
                         <div hidden={selectedOption !== "File"} className="w-full h-full">
                             <FileDropzone handleRemoveFile={handleRemoveFile} file={uploadedFile} handleUploadFile={handleUploadFile} />
                         </div>
