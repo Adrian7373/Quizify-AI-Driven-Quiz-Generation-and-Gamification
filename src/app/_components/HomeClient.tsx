@@ -11,12 +11,17 @@ import SignupModal from "./SignUpModal";
 import { handleAuthenticatedGeneration } from "../actions/generate";
 import type { AppUser, InputOption, QuizData, QuizType, DifficultyType } from "../page";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 interface HomeClientProps {
   initialUser: AppUser | null;
 }
 
 export default function HomeClient({ initialUser }: HomeClientProps) {
+
+  const MAX_FILE_SIZE_MB = 10;
+  const MAX_IMAGE_SIZE_MB = 5;
+
 
   const options: InputOption[] = ['File', 'Text', 'Image'];
   const [user, setUser] = useState<AppUser | null>(initialUser);
@@ -177,8 +182,16 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
   const handleUploadImage = (file: File) => {
     if (!file) return;
-    setUploadedImage(file)
-  }
+
+    const fileSizeMB = file.size / (1024 * 1024);
+
+    if (fileSizeMB > MAX_IMAGE_SIZE_MB) {
+      toast.error(`Image is too large! Please keep it under ${MAX_IMAGE_SIZE_MB}MB.`);
+      return; // Reject the image
+    }
+
+    setUploadedImage(file); // Accept the image
+  };
 
   const handleRemoveFile = () => {
     setUploadedFile(null)
@@ -186,8 +199,17 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
   const handleUploadFile = (file: File) => {
     if (!file) return;
-    setUploadedFile(file)
-  }
+
+    // Convert bytes to MB
+    const fileSizeMB = file.size / (1024 * 1024);
+
+    if (fileSizeMB > MAX_FILE_SIZE_MB) {
+      toast.error(`File is too large! Please keep it under ${MAX_FILE_SIZE_MB}MB.`);
+      return; // Reject the file
+    }
+
+    setUploadedFile(file); // Accept the file
+  };
 
   const handleSelectQuizType = (type: QuizType) => {
     if (!type) return;
