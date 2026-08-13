@@ -67,6 +67,18 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
         if (selectedOption === "File" && !uploadedFile) return toast.error("Please upload a file.");
         if (selectedOption === "Image" && !uploadedImage) return toast.error("Please upload an image.");
 
+        if (selectedOption === "File" && uploadedFile) {
+            if (uploadedFile.size / (1024 * 1024) > MAX_FILE_SIZE_MB) {
+                return toast.error(`File exceeds the ${MAX_FILE_SIZE_MB}MB limit.`);
+            }
+        }
+
+        if (selectedOption === "Image" && uploadedImage) {
+            if (uploadedImage.size / (1024 * 1024) > MAX_IMAGE_SIZE_MB) {
+                return toast.error(`Image exceeds the ${MAX_IMAGE_SIZE_MB}MB limit.`);
+            }
+        }
+
         try {
             setIsGenerating(true);
             const formData = new FormData();
@@ -111,11 +123,40 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
         }
     };
 
+    const MAX_FILE_SIZE_MB = 10;
+    const MAX_IMAGE_SIZE_MB = 5;
+
     // Upload Handlers
+
+    const handleUploadFile = (file: File) => {
+        if (!file) return;
+
+        // Convert bytes to MB
+        const fileSizeMB = file.size / (1024 * 1024);
+
+        if (fileSizeMB > MAX_FILE_SIZE_MB) {
+            toast.error(`File is too large! Please keep it under ${MAX_FILE_SIZE_MB}MB.`);
+            return; // Reject the file
+        }
+
+        setUploadedFile(file); // Accept the file
+    };
+
+    const handleUploadImage = (file: File) => {
+        if (!file) return;
+
+        const fileSizeMB = file.size / (1024 * 1024);
+
+        if (fileSizeMB > MAX_IMAGE_SIZE_MB) {
+            toast.error(`Image is too large! Please keep it under ${MAX_IMAGE_SIZE_MB}MB.`);
+            return; // Reject the image
+        }
+
+        setUploadedImage(file); // Accept the image
+    };
+
     const handleRemoveFile = () => setUploadedFile(null);
-    const handleUploadFile = (file: File) => file && setUploadedFile(file);
     const handleRemoveImage = () => setUploadedImage(null);
-    const handleUploadImage = (file: File) => file && setUploadedImage(file);
     const handleSelectQuizType = (type: QuizType) => type && setSelectedType(type);
 
     return (
@@ -152,8 +193,8 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                                     onClick={() => setSelectedOption(option)}
                                     disabled={isGenerating}
                                     className={`flex-1 py-2.5 px-4 text-sm font-bold rounded-lg transition-all ${isActive
-                                            ? 'bg-slate-900 text-white shadow-md'
-                                            : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                        ? 'bg-slate-900 text-white shadow-md'
+                                        : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                                         }`}
                                 >
                                     {option}
@@ -164,6 +205,16 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
 
                     {/* Dynamic Input Zone */}
                     <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm min-h-[160px]">
+                        {selectedOption === "File" && (
+                            <span className="absolute top-4 right-4 text-xs font-bold text-slate-400 z-10">Max {MAX_FILE_SIZE_MB}MB</span>
+                        )}
+                        {selectedOption === "Image" && (
+                            <span className="absolute top-4 right-4 text-xs font-bold text-slate-400 z-10">Max {MAX_IMAGE_SIZE_MB}MB</span>
+                        )}
+
+                        <div hidden={selectedOption !== "File"} className="w-full h-full">
+                            <FileDropzone handleRemoveFile={handleRemoveFile} file={uploadedFile} handleUploadFile={handleUploadFile} />
+                        </div>
                         <div hidden={selectedOption !== "File"} className="w-full h-full">
                             <FileDropzone handleRemoveFile={handleRemoveFile} file={uploadedFile} handleUploadFile={handleUploadFile} />
                         </div>
