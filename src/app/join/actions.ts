@@ -6,7 +6,10 @@ export async function joinGameSession(pin: string, nickname: string) {
         const session = await prisma.gameSession.findFirst({
             where: {
                 joinCode: pin,
-                status: "WAITING", // Only allow joining if the game hasn't officially started
+                OR: [
+                    { status: "WAITING" },
+                    { status: "IN_PROGRESS", mode: "ASYNC" }
+                ]
             },
         });
 
@@ -25,7 +28,8 @@ export async function joinGameSession(pin: string, nickname: string) {
         return {
             success: true,
             sessionId: session.id,
-            participantId: participant.id
+            participantId: participant.id,
+            mode: session.mode
         };
     } catch (error) {
         console.error("Join Error:", error);
