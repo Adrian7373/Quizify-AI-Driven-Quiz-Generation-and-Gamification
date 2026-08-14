@@ -126,11 +126,12 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
         setUserAnswers(prev => ({ ...prev, [questionIndex]: answer }));
     };
 
+    // 🚨 FIX 1: Send user back to previous page instead of forcing '/'
     const handleClose = () => {
         if (onClose) {
             onClose();
         } else {
-            router.push('/');
+            router.back();
         }
     };
 
@@ -234,27 +235,28 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
 
     return (
         <div className="w-full h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans overflow-hidden">
-            <header className="z-40 flex items-center justify-between px-2 sm:px-4 py-3 sm:py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0">
-                <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar pr-2 whitespace-nowrap">
-                    {/* ... (Your existing header buttons for Answers, Download, Print, Share, Edit, Assign) ... */}
+            <header className="z-40 flex px-3 sm:px-4 py-3 sm:py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0 relative min-h-[72px]">
 
-                    <label className="flex items-center cursor-pointer gap-2 group print:hidden shrink-0">
-                        <span className="text-xs sm:text-sm font-medium text-white group-hover:text-slate-300 transition-colors">
-                            {xsm ? "With Answers" : "Answers"}
+                {/* Action Container: flex-wrap with uniform gap, pr-12 ensures buttons don't overlap the absolute close button on mobile */}
+                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 flex-1 pr-12 sm:pr-0">
+
+                    {/* Answers Toggle */}
+                    <label className="flex items-center cursor-pointer gap-2 group print:hidden shrink-0 mr-1 sm:mr-0">
+                        <span className="text-sm font-medium text-white group-hover:text-slate-300 transition-colors">
+                            Answers
                         </span>
                         <div className="relative">
                             <input type="checkbox" className="sr-only" checked={includeAnswers} onChange={() => setIncludeAnswers(!includeAnswers)} />
-                            <div className={`block w-9 sm:w-11 h-5 sm:h-6 rounded-full transition-colors ${includeAnswers ? 'bg-[#4ce0a3]' : 'bg-slate-600'}`}></div>
-                            <div className={`absolute left-1 top-1 bg-white w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-transform ${includeAnswers ? 'translate-x-4 sm:translate-x-5' : ''}`}></div>
+                            <div className={`block w-11 h-6 rounded-full transition-colors ${includeAnswers ? 'bg-[#4ce0a3]' : 'bg-slate-600'}`}></div>
+                            <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${includeAnswers ? 'translate-x-5' : ''}`}></div>
                         </div>
                     </label>
 
-                    <div className="w-px h-5 sm:h-6 bg-slate-600 mx-1 sm:mx-2 print:hidden shrink-0"></div>
-
+                    {/* Download */}
                     <div className="relative print:hidden shrink-0">
-                        <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            {sm && "Download"}
+                        <button onClick={() => setShowDownloadMenu(!showDownloadMenu)} className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <span className="hidden sm:inline">Download</span>
                         </button>
 
                         {showDownloadMenu && (
@@ -266,59 +268,62 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                         )}
                     </div>
 
-                    <button onClick={handlePrint} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors print:hidden shrink-0">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        {xsm && "Print"}
+                    {/* Print */}
+                    <button onClick={handlePrint} className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors print:hidden shrink-0">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        <span className="hidden sm:inline">Print</span>
                     </button>
 
-                    <button onClick={handleShare} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-slate-900 bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors print:hidden shrink-0">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                        {xsm && "Share"}
-                    </button>
+                    {/* Desktop Divider */}
+                    <div className="hidden sm:block w-px h-6 bg-slate-600 mx-1 shrink-0"></div>
 
-                    <div className="w-px h-5 sm:h-6 bg-slate-600 mx-1 sm:mx-2 print:hidden shrink-0"></div>
-
+                    {/* Edit */}
                     {isEditing ? (
                         <>
-                            <button onClick={() => setIsEditing(false)} className="px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-slate-300 hover:text-white transition-colors shrink-0">
+                            <button onClick={() => setIsEditing(false)} className="px-3 py-2 h-10 sm:h-auto text-sm font-bold text-slate-300 hover:text-white transition-colors shrink-0">
                                 Cancel
                             </button>
-                            <button onClick={handleSaveChanges} disabled={isSavingEdits} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-white bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors disabled:opacity-70 shrink-0">
-                                {isSavingEdits ? "Saving..." : <><Save className="w-3 h-3 sm:w-4 sm:h-4" /> Save</>}
+                            <button onClick={handleSaveChanges} disabled={isSavingEdits} className="flex items-center justify-center gap-2 px-4 py-2 h-10 sm:h-auto text-sm font-bold text-white bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors disabled:opacity-70 shrink-0">
+                                {isSavingEdits ? "Saving..." : <><Save className="w-4 h-4" /> Save</>}
                             </button>
                         </>
                     ) : (
-                        <button onClick={() => setIsEditing(true)} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-slate-900 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors shrink-0">
-                            <Edit className="w-3 h-3 sm:w-4 sm:h-4" /> Edit
+                        <button onClick={() => setIsEditing(true)} className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 h-10 sm:h-auto text-sm font-bold text-slate-900 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors shrink-0">
+                            <Edit className="w-4 h-4" /> Edit
                         </button>
                     )}
 
+                    {/* Assign */}
                     {user && quizData.id && (
-                        <button onClick={() => setIsAssigning(true)} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-slate-900 bg-amber-300 rounded-lg hover:bg-amber-400 transition-colors print:hidden shrink-0">
-                            <CalendarClock className='w-3 h-3 sm:w-4 sm:h-4' />
-                            {sm && "Assign"}
+                        <button onClick={() => setIsAssigning(true)} className="flex items-center justify-center gap-1.5 gap-2 w-10 h-10 w-auto h-auto px-3 py-2 text-sm font-bold text-slate-900 bg-amber-300 rounded-lg hover:bg-amber-400 transition-colors print:hidden shrink-0">
+                            <CalendarClock className='w-5 h-5 sm:w-4 sm:h-4' />
+                            <span>Assign</span>
                         </button>
                     )}
 
+                    {/* Live */}
                     {user && quizData.id && (
                         <button
                             onClick={() => setIsLaunchingLive(true)}
-                            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors print:hidden shrink-0"
+                            className="flex items-center justify-center gap-1.5 gap-2 w-10 h-10 w-auto h-auto px-3 py-2 text-sm font-bold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors print:hidden shrink-0"
                         >
-                            <Play className='w-3 h-3 sm:w-4 sm:h-4' fill="currentColor" />
-                            {sm && "Live"}
+                            <Play className='w-5 h-5 sm:w-4 sm:h-4' fill="currentColor" />
+                            <span>Live</span>
                         </button>
                     )}
 
+                    {/* Delete */}
                     {user && (
-                        <button onClick={() => setIsDeleting(true)} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors print:hidden shrink-0">
-                            <Trash className='w-3 h-3 sm:w-4 sm:h-4' />
+                        <button onClick={() => setIsDeleting(true)} className="flex items-center justify-center gap-1.5 gap-2 w-10 h-10 w-auto h-auto px-3 py-2 text-sm font-bold text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors print:hidden shrink-0">
+                            <Trash className='w-5 h-5 sm:w-4 sm:h-4' />
+                            <span>Delete</span>
                         </button>
                     )}
                 </div>
 
-                <button onClick={handleClose} className="p-1.5 sm:p-2 ml-2 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-colors print:hidden shrink-0">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                {/* Close Button - absolute top right on mobile, normal flex item on desktop */}
+                <button onClick={handleClose} className="absolute right-3 top-3 sm:static sm:ml-2 flex items-center justify-center w-10 h-10 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-colors print:hidden shrink-0">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </header>
 
@@ -326,7 +331,6 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
             <main className="bg-slate-100 flex-1 overflow-y-auto p-4 sm:p-6 md:p-12 print:p-0 print:overflow-visible">
                 <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
                     {/* ... (Your existing Question loops, unchanged) ... */}
-                    {/* I've kept the full layout intact below so nothing breaks! */}
                     <div className="flex flex-col min-w-0 items-center justify-center bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none mb-6 sm:mb-8">
                         {isEditing ? (
                             <div className="w-full max-w-2xl space-y-4">
