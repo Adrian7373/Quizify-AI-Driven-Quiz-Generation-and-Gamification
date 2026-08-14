@@ -10,6 +10,7 @@ import EndSessionButton from "./_components/EndSessionButton";
 import ActiveLiveWidget from "../_components/ActiveLiveWidget";
 import DeleteSessionButton from "./_components/DeleteSessionButton";
 import GenerateNewButton from "./_components/GenerateNewButton";
+import CopyLinkButton from "./_components/CopyLinkButton"; // 🚨 Import the new button
 
 interface DashboardProps {
     searchParams: Promise<{ tab?: string }>;
@@ -202,10 +203,11 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                                 <div key={session.id} className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-amber-300 transition-colors">
 
                                     <div className="flex flex-col xsm:flex-row items-start xsm:items-center gap-4 sm:gap-5 w-full">
-                                        {/* PIN Display */}
-                                        <div className="bg-slate-100 px-4 py-3 rounded-lg text-center w-full xsm:w-auto min-w-[120px] shrink-0">
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Join PIN</p>
+                                        {/* PIN Display - Updated with Copy Button */}
+                                        <div className="bg-slate-100 p-3 rounded-xl text-center w-full xsm:w-auto min-w-[130px] shrink-0 flex flex-col justify-center border border-slate-200 shadow-inner">
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Game PIN</p>
                                             <p className="text-2xl font-black text-slate-900 tracking-widest">{session.joinCode}</p>
+                                            <CopyLinkButton joinCode={session.joinCode} />
                                         </div>
 
                                         {/* Info */}
