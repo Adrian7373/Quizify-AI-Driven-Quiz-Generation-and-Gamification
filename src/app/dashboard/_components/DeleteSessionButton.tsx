@@ -17,7 +17,6 @@ export default function DeleteSessionButton({ sessionId, hostId }: DeleteSession
     const [isShowing, setIsShowing] = useState(false);
 
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to delete this report? All student grades for this session will be permanently lost.")) return;
 
         setIsDeleting(true);
         const response = await deleteGameSession(sessionId, hostId);
@@ -43,19 +42,19 @@ export default function DeleteSessionButton({ sessionId, hostId }: DeleteSession
             </button>
 
             {isShowing && (
-                <div className="absolute bg-black/50 inset-0 z-50 flex items-center justify-center">
+                <div className="fixed bg-black/50 inset-0 z-50 flex items-center justify-center">
                     {/* Content */}
-                    <div className="bg-white p-8 mx-8 flex flex-col gap-3">
+                    <div className="bg-white p-8 mx-8 flex flex-col gap-3 rounded-lg">
                         <div className="flex items-center gap-2 justify-center mr-5">
                             <CircleX className="text-red-500 h-10 w-10" />
                             <p className="text-lg font-semibold">Delete Report?</p>
                         </div>
                         <p>Are you sure you want to <b>delete</b> this report? This action cannot be undone.</p>
                         <div className="flex justify-center gap-4">
-                            <button onClick={() => setIsShowing(false)} className="px-8 py-3 border-1 border-gray-300 rounded-md">
+                            <button onClick={() => setIsShowing(false)} className="px-8 py-3 border-1 border-gray-200 rounded-md bg-gray-100 hover:bg-gray-300 cursor-pointer">
                                 Cancel
                             </button>
-                            <button onClick={handleDelete} className="px-8 py-3 border-1 border-gray-300 rounded-md bg-red-500 text-white font-semibold">
+                            <button onClick={handleDelete} className="px-8 py-3 rounded-md bg-red-500 text-white font-semibold cursor-pointer hover:bg-red-700">
                                 Delete
                             </button>
                         </div>
