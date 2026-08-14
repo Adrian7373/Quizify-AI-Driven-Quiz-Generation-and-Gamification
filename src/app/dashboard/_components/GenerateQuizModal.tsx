@@ -167,7 +167,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
             >
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 bg-white border-b border-slate-100 shrink-0">
-                    <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <Sparkles className="text-[#4ce0a3] w-6 h-6" />
                         Generate Assessment
                     </h2>
@@ -184,7 +184,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                 <div className="p-6 md:p-8 overflow-y-auto flex-1 flex flex-col gap-6">
 
                     {/* Input Type Segmented Control */}
-                    <div className="flex w-full rounded-xl border-2 border-slate-200 overflow-hidden bg-white font-inter shadow-sm p-1 gap-1">
+                    <div className="flex w-full shrink-0 rounded-xl border-2 border-slate-200 overflow-hidden bg-white font-inter shadow-sm p-1 gap-1">
                         {options.map((option) => {
                             const isActive = selectedOption === option;
                             return (
@@ -310,7 +310,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                         onClick={handleGenerate}
                         disabled={isGenerating}
                         className={`
-                            relative flex items-center justify-center gap-3 py-4 w-full rounded-xl text-lg font-black transition-all shadow-lg active:scale-95
+                            relative flex items-center justify-center gap-3 py-4 w-full rounded-xl text-lg font-bold transition-all shadow-lg active:scale-95
                             ${isGenerating
                                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none active:scale-100'
                                 : 'bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900 shadow-[#4ce0a3]/20'
