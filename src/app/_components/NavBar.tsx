@@ -1,5 +1,5 @@
 "use client"
-import { CircleUserRound, Cog, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus } from "lucide-react";
+import { CirclePoundSterling, CircleUserRound, Cog, CreditCard, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus } from "lucide-react";
 import Logo from "./Logo";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -77,6 +77,12 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                 <Menu onClick={toggleMenu} strokeWidth={3} className="w-10 h-10 text-white cursor-pointer" />
                 <Logo />
             </div>
+            {user && (
+                <div className="flex items-center gap-1">
+                    <CirclePoundSterling fill="gold" className="text-gray-800" />
+                    <p className="text-white">{user?.aiCredits}</p>
+                </div>
+            )}
             <button onClick={toggleSignIn} hidden={!!user} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">Sign In</button>
 
             {/* FIX 2: Applied conditional visibility to the backdrop */}
