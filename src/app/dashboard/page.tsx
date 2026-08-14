@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
 import Link from "next/link";
-import { BrainCircuit, Calendar, CheckCircle2, Clock, FileQuestion, Layers, PlayCircle, Trophy, Users } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, FileQuestion, Layers, PlayCircle, Trophy, Users } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import EndSessionButton from "./_components/EndSessionButton";
 import ActiveLiveWidget from "../_components/ActiveLiveWidget";
