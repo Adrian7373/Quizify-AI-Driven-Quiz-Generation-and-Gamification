@@ -104,6 +104,11 @@ export default function JoinPage() {
         setParticipantId(response.participantId!);
         localStorage.setItem(`participant_${response.sessionId}`, response.participantId!);
 
+        if (response.mode === "ASYNC") {
+            router.push(`/play/${response.sessionId}`);
+            return;
+        }
+
         // 2. Triage: Are they a leader or a member?
         const status = await checkFactionStatus(response.sessionId!);
         setMaxFactions(status.maxFactions);
