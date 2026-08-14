@@ -59,7 +59,7 @@ export default function ExportCsvButton({ quizTitle, participants }: ExportCsvBu
     return (
         <button
             onClick={handleExportCsv}
-            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-md shadow-slate-900/20"
+            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-6 max-h-sm rounded-xl transition-all active:scale-95 shadow-md shadow-slate-900/20"
         >
             <FileSpreadsheet className="w-5 h-5 text-[#4ce0a3]" />
             Export CSV
