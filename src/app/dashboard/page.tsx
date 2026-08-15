@@ -10,8 +10,7 @@ import EndSessionButton from "./_components/EndSessionButton";
 import ActiveLiveWidget from "../_components/ActiveLiveWidget";
 import DeleteSessionButton from "./_components/DeleteSessionButton";
 import GenerateNewButton from "./_components/GenerateNewButton";
-import CopyLinkButton from "./_components/CopyLinkButton"; // 🚨 Import the new button
-import QuizCardActions from "./_components/QuizCardAction";
+import CopyLinkButton from "./_components/CopyLinkButton";
 import QuizCard from "./_components/QuizCard";
 
 interface DashboardProps {
@@ -60,7 +59,11 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
             where: {
                 hostId: authUser.id,
                 status: "IN_PROGRESS",
-                mode: "ASYNC"
+                mode: "ASYNC",
+                OR: [
+                    { expiresAt: null },
+                    { expiresAt: { gt: new Date() } }
+                ]
             },
             orderBy: { createdAt: 'desc' },
             include: {
@@ -73,7 +76,14 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         completedSessions = await prisma.gameSession.findMany({
             where: {
                 hostId: authUser.id,
-                status: "FINISHED" // Only get finished sessions
+                OR: [
+                    { status: "FINISHED" },
+                    {
+                        status: "IN_PROGRESS",
+                        mode: "ASYNC",
+                        expiresAt: { lte: new Date() } // Deadline is in the past
+                    }
+                ]
             },
             orderBy: { createdAt: 'desc' },
             include: {
