@@ -7,8 +7,15 @@ export async function joinGameSession(pin: string, nickname: string) {
             where: {
                 joinCode: pin,
                 OR: [
-                    { status: "WAITING" },
-                    { status: "IN_PROGRESS", mode: "ASYNC" }
+                    { status: "WAITING" }, // Live games waiting in lobby
+                    {
+                        status: "IN_PROGRESS",
+                        mode: "ASYNC",
+                        OR: [
+                            { expiresAt: null },
+                            { expiresAt: { gt: new Date() } }
+                        ]
+                    }
                 ]
             },
         });
