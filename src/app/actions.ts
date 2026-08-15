@@ -68,23 +68,21 @@ export async function saveQuiz(quizData: QuizData, userId: string) {
 }
 
 export async function deleteQuiz(quizId: string, userId: string) {
-    if (!quizId) return;
-
     try {
-        const quizToDelete = await prisma.quiz.delete({
+        await prisma.quiz.update({
             where: {
                 id: quizId,
                 creatorId: userId
+            },
+            data: {
+                isDeleted: true
             }
-        })
+        });
 
-
-
+        return { success: true };
     } catch (error) {
-        console.log(error)
-        return { error: "Failed to delete quiz." }
+        return { error: "Failed to delete quiz." };
     }
-    redirect("/");
 }
 
 export async function logOutUser() {
