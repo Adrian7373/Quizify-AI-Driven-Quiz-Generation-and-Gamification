@@ -204,7 +204,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                     </div>
 
                     {/* Dynamic Input Zone */}
-                    <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm min-h-[160px]">
+                    <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm min-h-[270px]">
                         {selectedOption === "File" && (
                             <span className="absolute top-4 right-4 text-xs font-bold text-slate-400 z-10">Max {MAX_FILE_SIZE_MB}MB</span>
                         )}
@@ -219,7 +219,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                                 value={textInput}
                                 onChange={(e) => setTextInput(e.target.value)}
                                 placeholder="Paste your source material here..."
-                                className="w-full h-40 border-none focus:ring-0 outline-none p-4 text-slate-700 font-medium resize-none bg-transparent placeholder:text-slate-300"
+                                className="w-full h-60 border-none focus:ring-0 outline-none p-4 text-slate-700 font-medium resize-none bg-transparent placeholder:text-slate-300"
                             />
                         </div>
                         <div hidden={selectedOption !== "Image"} className="w-full h-full">
