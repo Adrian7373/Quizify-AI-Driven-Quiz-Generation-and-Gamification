@@ -29,6 +29,7 @@ model Quiz {
   sessions    GameSession[]
   questions   Question[]
   creator     User          @relation(fields: [creatorId], references: [id])
+  isDeleted   Boolean       @default(false)
 }
 
 model Question {
