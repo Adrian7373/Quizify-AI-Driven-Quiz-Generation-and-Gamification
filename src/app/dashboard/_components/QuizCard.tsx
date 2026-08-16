@@ -9,9 +9,10 @@ import QuizCardActions from "./QuizCardAction"; // Adjust import name to match y
 interface QuizCardProps {
     quiz: any;
     userId: string;
+    userRole: "TEACHER" | "STUDENT";
 }
 
-export default function QuizCard({ quiz, userId }: QuizCardProps) {
+export default function QuizCard({ quiz, userId, userRole }: QuizCardProps) {
     // Optimistic state manager
     const [isOptimisticallyDeleted, setIsOptimisticallyDeleted] = useState(false);
 
@@ -26,8 +27,8 @@ export default function QuizCard({ quiz, userId }: QuizCardProps) {
                         {quiz.title}
                     </h3>
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-full shrink-0 ${quiz.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-700' :
-                            quiz.difficulty === 'normal' ? 'bg-blue-100 text-blue-700' :
-                                'bg-rose-100 text-rose-700'
+                        quiz.difficulty === 'normal' ? 'bg-blue-100 text-blue-700' :
+                            'bg-rose-100 text-rose-700'
                         }`}>
                         {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)}
                     </span>
@@ -61,6 +62,7 @@ export default function QuizCard({ quiz, userId }: QuizCardProps) {
                     quizTitle={quiz.title}
                     onDeleteOptimistic={() => setIsOptimisticallyDeleted(true)}
                     onDeleteRevert={() => setIsOptimisticallyDeleted(false)}
+                    userRole={userRole}
                 />
             </div>
         </div>
