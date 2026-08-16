@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import FlashcardClient from "./_components/FlashCardClient";
 
 interface StudyPageProps {
-    params: Promise<{ id: string }>;
+    params: Promise<{ quizId: string }>;
 }
 
 export default async function StudyPage({ params }: StudyPageProps) {
-    const { id } = await params;
+    const { quizId } = await params;
 
     const quiz = await prisma.quiz.findUnique({
-        where: { id },
+        where: { id: quizId },
         include: {
             questions: true
         }
