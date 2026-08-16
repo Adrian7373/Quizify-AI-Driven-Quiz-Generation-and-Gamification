@@ -17,6 +17,8 @@ interface DashboardProps {
     searchParams: Promise<{ tab?: string }>;
 }
 
+type UserRole = "TEACHER" | "STUDENT";
+
 export default async function DashboardPage({ searchParams }: DashboardProps) {
     const { tab } = await searchParams;
     const currentTab = tab || "quizzes";
@@ -34,6 +36,20 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     const userResponse = await getUser(authUser.id);
     if (userResponse.user) {
         appUser = userResponse.user;
+    }
+
+    let userRole: UserRole;
+
+    if (appUser?.id) {
+        // Fallback to empty object if null
+        const { role } = await prisma.user.findUnique({
+            where: { id: appUser.id },
+            select: { role: true }
+        }) || {};
+
+        if (role) {
+            userRole = role;
+        }
     }
 
     // 3. We only fetch the data required for the currently active tab.
@@ -60,6 +76,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 hostId: authUser.id,
                 status: "IN_PROGRESS",
                 mode: "ASYNC",
+                NOT: { joinCode: { startsWith: "PRAC-" } },
                 OR: [
                     { expiresAt: null },
                     { expiresAt: { gt: new Date() } }
@@ -76,6 +93,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         completedSessions = await prisma.gameSession.findMany({
             where: {
                 hostId: authUser.id,
+                NOT: { joinCode: { startsWith: "PRAC-" } },
                 OR: [
                     { status: "FINISHED" },
                     {
@@ -155,6 +173,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                                     key={quiz.id}
                                     quiz={quiz}
                                     userId={authUser.id}
+                                    userRole={userRole}
                                 />
                             ))}
                         </div>

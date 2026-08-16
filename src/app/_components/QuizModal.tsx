@@ -126,7 +126,6 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
         setUserAnswers(prev => ({ ...prev, [questionIndex]: answer }));
     };
 
-    // 🚨 FIX 1: Send user back to previous page instead of forcing '/'
     const handleClose = () => {
         if (onClose) {
             onClose();
