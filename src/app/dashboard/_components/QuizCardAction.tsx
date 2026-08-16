@@ -2,21 +2,26 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Play, Trash, CircleX, Users, Loader2, Copy, Check } from "lucide-react";
+import { CalendarClock, Play, Trash, CircleX, Users, Loader2, Copy, Check, BrainCircuit, BookOpen } from "lucide-react";
 import toast from "react-hot-toast";
-import { deleteQuiz } from "@/app/actions";
+import { deleteQuiz, startPracticeQuiz } from "@/app/actions";
 import { createAsyncSession, createLiveSession } from "@/app/actions/generate";
+import Link from "next/link";
 
 interface QuizCardActionsProps {
     quizId: string;
     userId: string;
     quizTitle: string;
+    userRole: "TEACHER" | "STUDENT";
     onDeleteOptimistic: () => void;
     onDeleteRevert: () => void;
 }
 
-export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOptimistic, onDeleteRevert }: QuizCardActionsProps) {
+export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOptimistic, onDeleteRevert, userRole }: QuizCardActionsProps) {
     const router = useRouter();
+
+    //Practice State
+    const [isStartingPractice, setIsStartingPractice] = useState(false);
 
     // Modal States
     const [isAssigning, setIsAssigning] = useState(false);
@@ -86,21 +91,67 @@ export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOpt
         }
     };
 
+    const handlePracticeLaunch = async () => {
+        setIsStartingPractice(true);
+
+        // 1. Satisfy TS by guaranteeing quizId and userId are valid strings before calling
+        if (!quizId || !userId) {
+            toast.error("Missing quiz or user information.");
+            setIsStartingPractice(false);
+            return;
+        }
+
+        const response = await startPracticeQuiz(quizId, userId, "Practice Mode");
+
+        // 2. Check for the error AND guarantee the response variables exist
+        if (response.error || !response.sessionId || !response.participantId) {
+            toast.error(response.error || "Failed to start practice.");
+            setIsStartingPractice(false);
+        } else {
+            // 3. TS now knows for a fact that response.participantId is a string
+            localStorage.setItem(`participant_${response.sessionId}`, response.participantId);
+            router.push(`/play/${response.sessionId}`);
+        }
+    };
+
     return (
         <>
             <div className="flex items-center gap-2 w-full mt-auto">
-                <button
-                    onClick={(e) => { e.preventDefault(); setIsAssigning(true); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-300 text-black hover:bg-amber-100 rounded-lg text-xs sm:text-sm font-bold transition-colors"
-                >
-                    <CalendarClock className="w-4 h-4" /> Assign
-                </button>
-                <button
-                    onClick={(e) => { e.preventDefault(); setIsLaunchingLive(true); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-indigo-500 text-white hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors"
-                >
-                    <Play className="w-4 h-4" fill="currentColor" /> Live
-                </button>
+
+
+                {userRole === "STUDENT" ? (
+                    <>
+                        <Link
+                            href={`/study/${quizId}`}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs sm:text-sm font-bold transition-colors"
+                        >
+                            <BookOpen className="w-4 h-4" /> Flashcards
+                        </Link>
+                        <button
+                            onClick={(e) => { e.preventDefault(); handlePracticeLaunch(); }}
+                            disabled={isStartingPractice}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors disabled:opacity-70"
+                        >
+                            {isStartingPractice ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <BrainCircuit className="w-4 h-4" />
+                            )}
+                            Practice Quiz
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <button onClick={() => setIsAssigning(true)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-xs sm:text-sm font-bold transition-colors">
+                            <CalendarClock className="w-4 h-4" /> Assign
+                        </button>
+                        <button onClick={() => setIsLaunchingLive(true)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors">
+                            <Play className="w-4 h-4" fill="currentColor" /> Live
+                        </button>
+                    </>
+                )}
+
+                {/* Delete button */}
                 <button
                     onClick={(e) => { e.preventDefault(); setIsDeleting(true); }}
                     className="flex items-center justify-center p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg transition-colors shrink-0"
@@ -109,6 +160,8 @@ export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOpt
                     <Trash className="w-4 h-4" />
                 </button>
             </div>
+
+
 
             {/* --- MODALS --- */}
             {isDeleting && (
