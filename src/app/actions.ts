@@ -95,7 +95,7 @@ export async function logOutUser() {
             return { error: "Failed to logout user" }
         }
 
-        return { success: true };
+        revalidatePath("/")
     } catch (err) {
         return { error: "Failed to logout user" }
     }
@@ -357,5 +357,43 @@ export async function submitAndGradeEssay(
     } catch (error) {
         console.error("Grading error:", error);
         return { error: "Failed to grade response." };
+    }
+}
+
+//Student starts a practice quiz
+export async function startPracticeQuiz(quizId: string, userId: string, nickname: string) {
+    try {
+        // 1. Create a self-hosted ASYNC session
+        const session = await prisma.gameSession.create({
+            data: {
+                quizId,
+                hostId: userId,
+                mode: "ASYNC",
+                status: "IN_PROGRESS", // Instantly active
+                joinCode: "PRAC-" + Math.random().toString(36).substring(2, 8).toUpperCase(), // Random dummy code
+
+                // 2. Automatically create the Participant record in the same transaction
+                participants: {
+                    create: {
+                        userId: userId,
+                        nickname: nickname,
+                    }
+                }
+            },
+            include: {
+                participants: true
+            }
+        });
+
+        // Return the participant ID so the client can redirect directly to the play screen
+        return {
+            success: true,
+            sessionId: session.id,
+            participantId: session.participants[0].id
+        };
+
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to start practice quiz." };
     }
 }
