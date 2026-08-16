@@ -28,6 +28,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
     // Question Interaction State
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+    const [textAnswer, setTextAnswer] = useState<string>("");// State for typed answers
     const [isRevealed, setIsRevealed] = useState(false);
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
 
@@ -42,7 +43,6 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
             setParticipantId(storedId);
 
-            // Fetch their progress from the database
             const progress = await getParticipantProgress(storedId);
 
             if (progress.error) {
@@ -51,11 +51,9 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                 return;
             }
 
-            // Sync the local score and streak
             setScore(progress.score || 0);
             setStreak(progress.streak || 0);
 
-            // Fast-forward to the first unanswered question
             if (progress.answeredQuestionIds && progress.answeredQuestionIds.length > 0) {
                 const nextUnansweredIndex = progress.answeredQuestionIds.length;
 
@@ -72,7 +70,6 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         initPlayer();
     }, [sessionId, router, questions.length]);
 
-    // 1. Authenticate the device
     useEffect(() => {
         const storedId = localStorage.getItem(`participant_${sessionId}`);
         if (!storedId) {
@@ -85,12 +82,26 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
     const currentQuestion = questions[currentIndex];
 
-    // 2. Handle the answer submission
-    const handleAnswerClick = async (answer: string) => {
+    // 2. Handle the answer submission (Updated to handle text evaluations)
+    const handleAnswerSubmit = async (answer: string) => {
         if (isRevealed || !participantId) return;
 
         const timeTakenMs = Date.now() - questionStartTime;
-        const isCorrect = answer === currentQuestion.correctAnswer;
+
+        //  Smart grading based on question type
+        let isCorrect = false;
+        if (currentQuestion.questionType === "IDENTIFICATION") {
+            // Case-insensitive exact match for identification
+            isCorrect = answer.trim().toLowerCase() === currentQuestion.correctAnswer.trim().toLowerCase();
+        } else if (currentQuestion.questionType === "ESSAY") {
+            // Essays are generally graded manually or via AI later. 
+            // We pass it to the DB, but can default to true/false for immediate points based on your preference.
+            // Using a simple exact match fallback for now.
+            isCorrect = answer.trim().toLowerCase() === (currentQuestion.correctAnswer || "").trim().toLowerCase();
+        } else {
+            // Multiple Choice / True False
+            isCorrect = answer === currentQuestion.correctAnswer;
+        }
 
         setSelectedAnswer(answer);
         setIsRevealed(true);
@@ -112,6 +123,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
             if (currentIndex < questions.length - 1) {
                 setCurrentIndex(prev => prev + 1);
                 setSelectedAnswer(null);
+                setTextAnswer(""); //  Clear the text field for the next question
                 setIsRevealed(false);
                 setQuestionStartTime(Date.now());
             } else {
@@ -122,11 +134,8 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
     const handleExit = async () => {
         setIsExiting(true);
-        // Fire the cleanup action (it safely ignores non-practice sessions)
         await cleanupPracticeSession(sessionId);
-        // Clear the local storage
         localStorage.removeItem(`participant_${sessionId}`);
-        // Route back to dashboard
         router.push("/dashboard");
     };
 
@@ -139,7 +148,6 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         );
     }
 
-    // --- VIEW 1: RESULTS SCREEN ---
     if (isFinished) {
         return (
             <div className="flex flex-col items-center justify-center h-screen p-6 animate-in fade-in zoom-in duration-500">
@@ -166,7 +174,9 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         );
     }
 
-    // --- VIEW 2: GAME PLAYER ---
+    // Determine if this is a text-based question
+    const isTextBased = currentQuestion.questionType === "ESSAY" || currentQuestion.questionType === "IDENTIFICATION";
+
     return (
         <div className="flex flex-col h-screen max-w-3xl mx-auto p-4 md:p-8">
             {/* Header: Progress and Score */}
@@ -187,47 +197,83 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
             </div>
 
             {/* Question Card */}
-            <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 mb-6 flex-1 flex flex-col justify-center items-center text-center">
+            <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 mb-6 flex-1 flex flex-col justify-center items-center text-center shrink-0 min-h-[200px]">
                 <h2 className="text-2xl md:text-3xl font-bold text-slate-800">
                     {currentQuestion.questionText}
                 </h2>
             </div>
 
-            {/* Answers Grid (Supports Multiple Choice or True/False) */}
-            <div className={`grid gap-4 shrink-0 ${currentQuestion.options?.length > 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                {currentQuestion.options?.map((option: string, idx: number) => {
-
-                    // Determine button styling based on reveal state
-                    let buttonStyle = "bg-white text-slate-700 hover:bg-slate-100 border-slate-200 border-b-4 active:border-b-0 active:translate-y-1";
-
-                    if (isRevealed) {
-                        if (option === currentQuestion.correctAnswer) {
-                            buttonStyle = "bg-emerald-500 text-white border-emerald-600 border-b-4"; // Correct answer lights up green
-                        } else if (option === selectedAnswer) {
-                            buttonStyle = "bg-rose-500 text-white border-rose-600 border-b-4"; // Wrong choice lights up red
-                        } else {
-                            buttonStyle = "bg-slate-200 text-slate-400 border-slate-300 border-b-4 opacity-50"; // Others fade out
-                        }
-                    }
-
-                    return (
-                        <button
-                            key={idx}
-                            onClick={() => handleAnswerClick(option)}
+            {/* CONDITIONAL RENDER: Text Input vs Options Grid */}
+            {isTextBased ? (
+                <div className="w-full flex flex-col gap-4 shrink-0">
+                    {currentQuestion.questionType === "ESSAY" ? (
+                        <textarea
+                            value={textAnswer}
+                            onChange={(e) => setTextAnswer(e.target.value)}
                             disabled={isRevealed}
-                            className={`p-6 rounded-xl font-bold text-lg md:text-xl transition-all duration-200 border-2 ${buttonStyle}`}
-                        >
-                            {option}
-                        </button>
-                    );
-                })}
-            </div>
+                            placeholder="Type your essay answer here..."
+                            className="w-full p-4 rounded-xl border-2 border-slate-200 text-slate-800 focus:border-[#4ce0a3] focus:outline-none resize-none min-h-[150px] transition-colors disabled:bg-slate-100 disabled:text-slate-500 text-base md:text-lg"
+                        />
+                    ) : (
+                        <input
+                            type="text"
+                            value={textAnswer}
+                            onChange={(e) => setTextAnswer(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && textAnswer.trim() && handleAnswerSubmit(textAnswer)}
+                            disabled={isRevealed}
+                            placeholder="Type your answer here..."
+                            className="w-full p-4 md:p-6 rounded-xl border-2 border-slate-200 text-slate-800 focus:border-[#4ce0a3] focus:outline-none text-center font-bold text-lg md:text-xl transition-colors disabled:bg-slate-100 disabled:text-slate-500"
+                        />
+                    )}
+
+                    <button
+                        onClick={() => handleAnswerSubmit(textAnswer)}
+                        disabled={isRevealed || !textAnswer.trim()}
+                        className="w-full p-4 md:p-6 rounded-xl font-bold text-lg md:text-xl bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900 disabled:opacity-50 transition-colors shadow-sm"
+                    >
+                        Submit Answer
+                    </button>
+                </div>
+            ) : (
+                <div className={`grid gap-4 shrink-0 ${currentQuestion.options?.length > 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                    {currentQuestion.options?.map((option: string, idx: number) => {
+                        let buttonStyle = "bg-white text-slate-700 hover:bg-slate-100 border-slate-200 border-b-4 active:border-b-0 active:translate-y-1";
+
+                        if (isRevealed) {
+                            if (option === currentQuestion.correctAnswer) {
+                                buttonStyle = "bg-emerald-500 text-white border-emerald-600 border-b-4";
+                            } else if (option === selectedAnswer) {
+                                buttonStyle = "bg-rose-500 text-white border-rose-600 border-b-4";
+                            } else {
+                                buttonStyle = "bg-slate-200 text-slate-400 border-slate-300 border-b-4 opacity-50";
+                            }
+                        }
+
+                        return (
+                            <button
+                                key={idx}
+                                onClick={() => handleAnswerSubmit(option)}
+                                disabled={isRevealed}
+                                className={`p-6 rounded-xl font-bold text-lg md:text-xl transition-all duration-200 border-2 ${buttonStyle}`}
+                            >
+                                {option}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
 
             {/* Explanation Popup */}
             <div className={`mt-4 bg-slate-800 rounded-xl p-4 transition-all duration-500 ${isRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                {/* For text questions, seeing the exact correct answer is incredibly helpful */}
+                {isTextBased && currentQuestion.correctAnswer && (
+                    <p className="text-[#4ce0a3] font-bold text-sm md:text-base mb-2 border-b border-slate-700 pb-2">
+                        Correct Answer: <span className="text-white font-normal">{currentQuestion.correctAnswer}</span>
+                    </p>
+                )}
                 <p className="text-slate-300 text-sm md:text-base">
                     <span className="font-bold text-white">Explanation: </span>
-                    {currentQuestion.explanation}
+                    {currentQuestion.explanation || "No specific explanation provided."}
                 </p>
             </div>
         </div>
