@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { submitAnswer } from "../actions";
-import { Loader2, Flame, Trophy } from "lucide-react";
+import { submitAnswer, getParticipantProgress } from "../actions";
+import { cleanupPracticeSession } from "@/app/actions";
+import { Loader2, Flame, Trophy, LogOut } from "lucide-react";
 import toast from "react-hot-toast";
-import { getParticipantProgress } from "../actions";
 
 interface AsyncPlayerProps {
     sessionId: string;
@@ -15,8 +15,10 @@ interface AsyncPlayerProps {
 
 export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPlayerProps) {
     const router = useRouter();
+
     const [participantId, setParticipantId] = useState<string | null>(null);
     const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+    const [isExiting, setIsExiting] = useState(false);
 
     // Game State
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,7 +30,6 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [isRevealed, setIsRevealed] = useState(false);
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-
 
     useEffect(() => {
         async function initPlayer() {
@@ -56,12 +57,10 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
             // Fast-forward to the first unanswered question
             if (progress.answeredQuestionIds && progress.answeredQuestionIds.length > 0) {
-                // Because you used array index as questionId in submitAnswer ("0", "1", etc)
-                // The length of answered questions is perfectly equivalent to the next index!
                 const nextUnansweredIndex = progress.answeredQuestionIds.length;
 
                 if (nextUnansweredIndex >= questions.length) {
-                    setIsFinished(true); // They already finished the quiz!
+                    setIsFinished(true);
                 } else {
                     setCurrentIndex(nextUnansweredIndex);
                 }
@@ -88,16 +87,14 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
     // 2. Handle the answer submission
     const handleAnswerClick = async (answer: string) => {
-        if (isRevealed || !participantId) return; // Prevent double-clicking
+        if (isRevealed || !participantId) return;
 
         const timeTakenMs = Date.now() - questionStartTime;
         const isCorrect = answer === currentQuestion.correctAnswer;
 
-        // Show immediate visual feedback
         setSelectedAnswer(answer);
         setIsRevealed(true);
 
-        // Fire background server action
         const response = await submitAnswer(
             participantId,
             currentIndex.toString(),
@@ -111,7 +108,6 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
             setStreak(response.currentStreak || 0);
         }
 
-        // Wait 2.5 seconds so they can read the explanation, then advance
         setTimeout(() => {
             if (currentIndex < questions.length - 1) {
                 setCurrentIndex(prev => prev + 1);
@@ -122,6 +118,16 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                 setIsFinished(true);
             }
         }, 3000);
+    };
+
+    const handleExit = async () => {
+        setIsExiting(true);
+        // Fire the cleanup action (it safely ignores non-practice sessions)
+        await cleanupPracticeSession(sessionId);
+        // Clear the local storage
+        localStorage.removeItem(`participant_${sessionId}`);
+        // Route back to dashboard
+        router.push("/dashboard");
     };
 
     if (!participantId || isLoadingProgress) {
@@ -148,10 +154,12 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                     </div>
 
                     <button
-                        onClick={() => router.push('/')}
-                        className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition"
+                        onClick={handleExit}
+                        disabled={isExiting}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition disabled:opacity-70"
                     >
-                        Return Home
+                        {isExiting ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
+                        {isExiting ? "Cleaning up..." : "Exit to Dashboard"}
                     </button>
                 </div>
             </div>
