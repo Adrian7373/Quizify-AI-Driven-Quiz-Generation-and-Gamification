@@ -397,3 +397,24 @@ export async function startPracticeQuiz(quizId: string, userId: string, nickname
         return { error: "Failed to start practice quiz." };
     }
 }
+
+
+export async function cleanupPracticeSession(sessionId: string) {
+    try {
+        // 1. Verify it actually is a practice session before deleting
+        const session = await prisma.gameSession.findUnique({
+            where: { id: sessionId },
+            select: { joinCode: true }
+        });
+
+        if (session && session.joinCode.startsWith("PRAC-")) {
+            // 2. Delete it. (Prisma's onDelete: Cascade will automatically 
+            // wipe out the linked Participants and Responses!)
+            await prisma.gameSession.delete({
+                where: { id: sessionId }
+            });
+        }
+    } catch (error) {
+        console.error("Failed to clean up practice session:", error);
+    }
+}
