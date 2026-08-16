@@ -305,7 +305,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
             </div>
 
             <div className="w-full max-w-sm mb-4">
-              <label className="block text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">
+              <label className="block text-sm font-bold text-white uppercase tracking-wider mb-2">
                 Quiz Language
               </label>
               <select
@@ -319,7 +319,6 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
                 <option value="Spanish">Spanish</option>
                 <option value="French">French</option>
                 <option value="Japanese">Japanese</option>
-                {/* Add any other languages you want to support */}
               </select>
             </div>
 
