@@ -106,7 +106,7 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                         <div className="text-white">
                             <div className="flex flex-col py-2 gap-2 mb-6">
                                 <Link href="/" className="flex gap-2 w-full py-2 hover:bg-slate-800 rounded-md px-2 cursor-pointer"><Plus />New quiz</Link>
-                                <Link href="/dashboard" className="flex gap-2 py-2 w-full hover:bg-slate-800 rounded-md px-2 cursor-pointer"><LayoutDashboard />Dashboard</Link>
+                                <Link hidden={!user} href="/dashboard" className="flex gap-2 py-2 w-full hover:bg-slate-800 rounded-md px-2 cursor-pointer"><LayoutDashboard />Dashboard</Link>
                             </div>
                             <p className="text-gray-400 mb-2 text-sm">Recent quizzes</p>
                             <hr />
@@ -154,6 +154,12 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                                 )}
                             </div>
                         </div>
+                        {!user && (
+                            <div className="flex flex-col items-center justify-center gap-2">
+                                <button onClick={toggleSignIn} hidden={!!user} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">Sign In</button>
+                                <p className="text-white text-sm">Sign In to access more features</p>
+                            </div>
+                        )}
                         {/* Account section */}
                         <div className="flex items-center justify-between px-2 mt-auto">
                             <div className="flex items-center">
@@ -179,12 +185,12 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
 
             {isLoggingOut && (
                 <div onClick={toggleLogout} className='bg-black/50 z-50 fixed inset-0 flex h-dvh items-center justify-center'>
-                    <div className='z-[60] bg-white p-7 mx-8 flex flex-col items-center gap-2 rounded-md'>
+                    <div className='z-[60] bg-white p-10 mx-8 flex flex-col items-center gap-2 rounded-md'>
                         <p className='flex text-2xl items-center pr-2'><LogOut className='w-8 h-8 pt-0.5 text-red-500' />Log out?</p>
                         <p>Are you sure you want to log out?</p>
-                        <div className='flex gap-4'>
-                            <button onClick={toggleLogout} className='bg-slate-200 text-black text-2xl font-semibold px-4 py-2 rounded-md'>Cancel</button>
-                            <button className='bg-red-500 text-white text-2xl font-semibold px-4 py-2 rounded-md flex gap-2 items-center' onClick={handleLogOut}>{isPending && (<Cog className="animate-spin" />)}Confirm</button>
+                        <div className='flex gap-4 mt-4'>
+                            <button onClick={toggleLogout} className='bg-slate-200 text-black text-xl font-semibold px-4 py-2 rounded-md hover:bg-slate-300 transition-colors duration-300'>Cancel</button>
+                            <button className='bg-red-500 text-white text-xl font-semibold px-4 py-2 rounded-md flex gap-2 items-center hover:bg-red-700 transition-colors duration-300' onClick={handleLogOut}>{isPending && (<Cog className="animate-spin" />)}Confirm</button>
                         </div>
                     </div>
                 </div>
