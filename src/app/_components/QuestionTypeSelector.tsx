@@ -19,7 +19,7 @@ export default function QuizTypeSelector({ quizType, handleTypeChange }: Questio
 
     return (
         <div className="w-full flex flex-col gap-2 font-inter shrink-0">
-            <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+            <label className="text-sm font-bold text-white uppercase tracking-wider">
                 Question Type
             </label>
 
