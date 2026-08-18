@@ -292,7 +292,7 @@ export async function submitAndGradeEssay(
         if (!question) return { error: "Question not found." };
 
         // 2. Call the Flask Microservice
-        const pythonApiUrl = process.env.PYTHON_AI_URL || 'http://localhost:5000/api/grade-answer';
+        const pythonApiUrl = process.env.PYTHON_AI_URL || "http://127.0.0.1:5000";
 
         const aiResponse = await fetch(pythonApiUrl, {
             method: 'POST',

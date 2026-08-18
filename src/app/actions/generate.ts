@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { waitForDatabaseConnection } from "@/lib/prisma-connection";
 import { Question } from "../_components/QuizModal";
 
+const baseUrl = process.env.PYTHON_AI_URL || 'http://127.0.0.1:5000';
+
 function getErrorCode(error: unknown): string | undefined {
     if (typeof error !== "object" || error === null) return undefined
     if (!("code" in error)) return undefined
@@ -90,7 +92,7 @@ export default async function handleAnonymousGeneration(formData: FormData, visi
             if (image) flaskFormData.append("image", image); // Appends the raw File object
         }
 
-        const flaskRes = await fetch('http://127.0.0.1:5000/api/generate', {
+        const flaskRes = await fetch(`${baseUrl}/api/generate`, {
             method: 'POST',
             body: flaskFormData,
         });
@@ -178,7 +180,7 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
             if (image) flaskFormData.append("image", image); // Appends the raw File object
         }
 
-        const flaskRes = await fetch('http://127.0.0.1:5000/api/generate', {
+        const flaskRes = await fetch(`${baseUrl}/api/generate`, {
             method: 'POST',
             body: flaskFormData,
         });
@@ -371,7 +373,7 @@ export async function generateClassInsight(sessionId: string) {
         }
 
         // 4. Send to your Python Flask/Django Microservice
-        const pythonApiUrl = process.env.PYTHON_AI_URL || 'http://localhost:5000/api/insights';
+        const pythonApiUrl = baseUrl;
 
         const aiResponse = await fetch(pythonApiUrl, {
             method: 'POST',
