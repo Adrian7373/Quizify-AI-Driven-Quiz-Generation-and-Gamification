@@ -16,9 +16,9 @@ interface AsyncPlayerProps {
 
 const getFontSize = (text: string) => {
     if (!text) return "text-xl md:text-2xl";
-    if (text.length > 250) return "text-base md:text-lg"; // Very long essay prompts
-    if (text.length > 120) return "text-lg md:text-xl";   // Medium length questions
-    return "text-2xl md:text-3xl";                        // Standard short questions
+    if (text.length > 250) return "text-base md:text-lg";
+    if (text.length > 120) return "text-lg md:text-xl";
+    return "text-2xl md:text-3xl";
 };
 
 export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPlayerProps) {
@@ -40,7 +40,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
     // Question Interaction State
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [textAnswer, setTextAnswer] = useState<string>("");// State for typed answers
+    const [textAnswer, setTextAnswer] = useState<string>("");
     const [isRevealed, setIsRevealed] = useState(false);
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
 
@@ -94,9 +94,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
     const currentQuestion = questions[currentIndex];
 
-    // 2. Handle the answer submission (Updated to handle text evaluations)
     const handleAnswerSubmit = async (answer: string) => {
-        // Prevent double submissions or submitting while AI is grading
         if (isRevealed || !participantId || isGrading) return;
 
         const timeTakenMs = Date.now() - questionStartTime;
@@ -104,17 +102,15 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         let earnedPoints = 0;
         let newStreak = streak;
 
-        // Immediately lock the UI
         setSelectedAnswer(answer);
         setIsRevealed(true);
 
-        // --- BRANCH 1: ESSAY (AI Graded via Flask) ---
         if (currentQuestion.questionType === "ESSAY") {
-            setIsGrading(true); // Start the loading spinner on the button
+            setIsGrading(true);
 
             const response = await submitAndGradeEssay(
                 participantId,
-                currentQuestion.id, // Use the database ID, not the currentIndex!
+                currentQuestion.id,
                 answer,
                 "English",
                 timeTakenMs
@@ -122,10 +118,9 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
 
             if (response.success) {
                 isCorrect = response.isCorrect;
-                setAiFeedback(response.feedback || null); // Save the feedback to display
+                setAiFeedback(response.feedback || null);
                 earnedPoints = response.pointsEarned || 0;
 
-                // Calculate streak manually since the essay action doesn't return it
                 if (!isCorrect) newStreak = 0;
                 else newStreak = streak + 1;
             } else {
@@ -133,21 +128,18 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                 isCorrect = false;
                 newStreak = 0;
             }
-            setIsGrading(false); // Stop the spinner
+            setIsGrading(false);
 
-            // --- BRANCH 2: IDENTIFICATION & MULTIPLE CHOICE (Locally Graded) ---
         } else {
             if (currentQuestion.questionType === "IDENTIFICATION") {
-                // Case-insensitive exact match
                 isCorrect = answer.trim().toLowerCase() === currentQuestion.correctAnswer.trim().toLowerCase();
             } else {
-                // Exact match for Multiple Choice / True False
                 isCorrect = answer === currentQuestion.correctAnswer;
             }
 
             const response = await submitAnswer(
                 participantId,
-                currentQuestion.id, // Use the database ID here too!
+                currentQuestion.id,
                 answer,
                 isCorrect,
                 timeTakenMs
@@ -159,19 +151,17 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
             }
         }
 
-        // Apply visual updates instantly to the UI
         setScore(prev => prev + earnedPoints);
         setStreak(newStreak);
 
-        // Give them 5 seconds to read the AI feedback if it's an essay, otherwise 3 seconds
         const readTimeMs = currentQuestion.questionType === "ESSAY" ? 5000 : 3000;
 
         setTimeout(() => {
             if (currentIndex < questions.length - 1) {
                 setCurrentIndex(prev => prev + 1);
                 setSelectedAnswer(null);
-                setTextAnswer(""); // Clear the text field
-                setAiFeedback(null); // Clear the AI feedback
+                setTextAnswer("");
+                setAiFeedback(null);
                 setIsRevealed(false);
                 setQuestionStartTime(Date.now());
             } else {
@@ -180,6 +170,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         }, readTimeMs);
     };
 
+    // This safely deletes the session (if practice) and exits
     const handleExit = async () => {
         setIsExiting(true);
         await cleanupPracticeSession(sessionId);
@@ -222,17 +213,32 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         );
     }
 
-    // Determine if this is a text-based question
     const isTextBased = currentQuestion.questionType === "ESSAY" || currentQuestion.questionType === "IDENTIFICATION";
 
     return (
         <div className="flex flex-col h-[100dvh] max-w-3xl mx-auto p-4 md:p-8">
 
-            {/* Header: Progress and Score */}
+            {/* Header: Progress, Score*/}
             <div className="flex items-center justify-between text-white mb-4 md:mb-6 shrink-0">
-                <div className="bg-slate-800 px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold text-sm md:text-base">
-                    {currentIndex + 1} / {questions.length}
+
+                <div className="flex items-center gap-2 md:gap-3">
+                    <button
+                        onClick={handleExit}
+                        disabled={isExiting}
+                        title="Exit to Dashboard"
+                        className="flex items-center justify-center p-2 bg-slate-800 text-slate-400 hover:bg-rose-500 hover:text-white rounded-lg transition-colors disabled:opacity-50"
+                    >
+                        {isExiting ? <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" /> : <LogOut className="w-4 h-4 md:w-5 md:h-5" />}
+                        {/* Hidden on mobile, shows "Exit" on tablet/desktop */}
+                        <span className="hidden md:inline ml-2 text-sm font-bold">Exit</span>
+                    </button>
+
+                    <div className="bg-slate-800 px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold text-sm md:text-base">
+                        {currentIndex + 1} / {questions.length}
+                    </div>
                 </div>
+
+                {/* RIGHT SIDE: Streak + Score */}
                 <div className="flex items-center gap-3 md:gap-4">
                     {streak >= 3 && (
                         <div className="flex items-center gap-1 text-orange-400 font-bold animate-pulse text-sm md:text-base">
@@ -245,7 +251,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                 </div>
             </div>
 
-            {/* min-h-0 lets flex-1 shrink below content size, forcing the overflow-y-auto to trigger! */}
+            {/* Question Card */}
             <div className="bg-white rounded-2xl shadow-xl p-5 md:p-8 mb-4 md:mb-6 flex-1 min-h-0 flex flex-col justify-center items-center text-center overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="w-full my-auto">
                     <h2 className={`${getFontSize(currentQuestion.questionText)} font-bold text-slate-800 leading-snug text-balance`}>
@@ -263,8 +269,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                             onChange={(e) => setTextAnswer(e.target.value)}
                             disabled={isRevealed}
                             placeholder="Type your essay answer here..."
-                            // Reduced min-h on mobile so it doesn't take up the whole screen when keyboard is open
-                            className="w-full p-4 rounded-xl border-2 border-slate-200 text-white focus:border-[#4ce0a3] focus:outline-none resize-none h-[120px] md:h-[150px] transition-colors disabled:bg-slate-100 disabled:text-slate-500 text-sm md:text-base"
+                            className="w-full p-4 rounded-xl border-2 border-slate-200 text-slate-800 focus:border-[#4ce0a3] focus:outline-none resize-none h-[120px] md:h-[150px] transition-colors disabled:bg-slate-100 disabled:text-slate-500 text-sm md:text-base"
                         />
                     ) : (
                         <input
@@ -274,7 +279,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                             onKeyDown={(e) => e.key === 'Enter' && textAnswer.trim() && handleAnswerSubmit(textAnswer)}
                             disabled={isRevealed}
                             placeholder="Type your answer here..."
-                            className="w-full p-4 md:p-5 rounded-xl border-2 border-slate-200 text-white focus:border-[#4ce0a3] focus:outline-none text-center font-bold text-base md:text-lg transition-colors disabled:bg-slate-100 disabled:text-slate-500"
+                            className="w-full p-4 md:p-5 rounded-xl border-2 border-slate-200 text-slate-800 focus:border-[#4ce0a3] focus:outline-none text-center font-bold text-base md:text-lg transition-colors disabled:bg-slate-100 disabled:text-slate-500"
                         />
                     )}
 
@@ -316,7 +321,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                 </div>
             )}
 
-            {/* Explanation Popup (Also scrollable just in case the AI writes a novel) */}
+            {/* Explanation Popup */}
             <div className={`mt-3 md:mt-4 bg-slate-800 rounded-xl p-4 transition-all duration-500 shrink-0 max-h-[30vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isRevealed ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none hidden'}`}>
                 {isTextBased && currentQuestion.correctAnswer && (
                     <p className="text-[#4ce0a3] font-bold text-xs md:text-sm mb-2 border-b border-slate-700 pb-2">
