@@ -237,12 +237,12 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
         {quizData && isOpen ? (
           <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
         ) : (
-          <section className="py-2 px-6 flex flex-col items-center flex-1 overflow-y-auto lg:flex-row lg:justify-center">
+          <section className="py-2 px-6 flex flex-col items-center flex-1 overflow-y-auto lg:flex-row lg:justify-center lg:gap-10 xl:gap-15">
             <div className="py-7 text-white font-inter flex flex-col gap-2 lg:max-w-sm">
               <h1 className="text-2xl text-center lg:text-4xl lg:text-left">Turn Any Text Into an Assessment in Seconds</h1>
               <p className="text-md text-center lg:text-xl lg:font-light lg:text-left">Paste your source material, and Quizify instantly generates accurate, gamified multiple-choice questions.</p>
             </div>
-            <div className="flex flex-col items-center lg:px-10">
+            <div className="flex flex-col items-center xl:w-lg">
               {/* The Segmented Control Container */}
               <div className="flex shrink-0 w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
                 {options.map((option, index) => {
