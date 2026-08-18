@@ -104,7 +104,7 @@ export default function ImageUploadZone({ image, handleUploadImage, handleRemove
         <div
             className={`
         flex flex-col items-center justify-center w-full px-6 py-10
-        border-2 border-dashed rounded-2xl transition-colors
+        border-2 border-dashed rounded-t-2xl transition-colors
         ${isDragging
                     ? 'border-brand bg-brand/5'
                     : 'border-slate-300 bg-white'

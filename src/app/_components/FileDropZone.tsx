@@ -98,7 +98,7 @@ export default function FileDropzone({ file, handleUploadFile, handleRemoveFile 
         <div
             className={`
         flex flex-col items-center justify-center w-full px-12 py-6
-        border-2 border-dashed rounded-2xl transition-colors font-inter
+        border-2 border-dashed rounded-t-2xl transition-colors font-inter
         ${isDragging
                     ? 'border-brand bg-brand/5'
                     : 'border-slate-300 bg-white'
