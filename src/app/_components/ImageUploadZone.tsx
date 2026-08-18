@@ -60,7 +60,7 @@ export default function ImageUploadZone({ image, handleUploadImage, handleRemove
     // Success UI: Shown when an image is successfully selected
     if (image) {
         return (
-            <div className="flex items-center justify-between w-full p-4 border rounded-xl bg-slate-50 border-slate-200">
+            <div className="flex items-center justify-between w-full p-4 border rounded-t-xl bg-slate-50 border-slate-200">
                 <div className="flex items-center gap-3 overflow-hidden max-w-54">
                     {/* Image/Photo Icon */}
                     <div className="flex-shrink-0 p-2 bg-white rounded-lg border border-slate-200 shadow-sm text-brand">

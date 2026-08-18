@@ -53,7 +53,7 @@ export default function FileDropzone({ file, handleUploadFile, handleRemoveFile 
 
     if (file) {
         return (
-            <div className="flex items-center justify-between w-full p-4 border rounded-xl bg-slate-50 border-slate-200 font-inter">
+            <div className="flex items-center justify-between w-full p-4 border rounded-t-xl bg-slate-50 border-slate-200 font-inter">
                 <div className="flex items-center gap-3 overflow-hidden max-w-54">
                     {/* Document Icon */}
                     <div className="flex-shrink-0 p-2 bg-white rounded-lg border border-slate-200 shadow-sm text-brand">
