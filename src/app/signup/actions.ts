@@ -3,13 +3,13 @@ import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/prisma"
-import { Role } from "@/generated/prisma/enums"
 
 export async function signUp(formData: FormData) {
     const name = formData.get('name') as string
     const email = (formData.get('email') as string)?.trim().toLowerCase()
     const password = formData.get('password') as string
-    const role = (formData.get("role") as Role | null) || Role.STUDENT
+    const rawRole = (formData.get("role") as string);
+    const role = (rawRole === "TEACHER" ? "TEACHER" : "STUDENT") as "TEACHER" | "STUDENT";
 
     const supabase = await createClient()
 
