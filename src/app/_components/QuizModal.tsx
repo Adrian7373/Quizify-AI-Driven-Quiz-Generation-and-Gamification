@@ -5,12 +5,13 @@ import { useMediaQuery } from 'react-responsive';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
-import { CalendarClock, Check, CircleX, Copy, Edit, Save, Timer, Trash, Play, Users, Loader2 } from 'lucide-react';
+import { CalendarClock, Check, CircleX, Copy, Edit, Save, Timer, Trash, Play, Users, Loader2, BookOpen, BrainCircuit } from 'lucide-react';
 import type { AppUser } from '../page';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { deleteQuiz, updateQuiz } from '../actions';
 import { createAsyncSession, createLiveSession } from '../actions/generate';
+import { startPracticeQuiz } from '../actions';
 
 // Interfaces matching your Pydantic/Prisma unified schema
 export interface Question {
@@ -68,12 +69,17 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     const [isCreatingSession, setIsCreatingSession] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
+    // Practice Quiz states
+    const [isStartingPractice, setIsStartingPractice] = useState(false);
+
     const [isLaunchingLive, setIsLaunchingLive] = useState(false);
     const [maxFactions, setMaxFactions] = useState(4);
     const [isCreatingLive, setIsCreatingLive] = useState(false);
     const [gameMode, setGameMode] = useState<"SOLO" | "FACTIONS">("SOLO");
 
     if (!isOpen || !quizData) return null;
+
+    const isStudent = user?.role === "STUDENT";
 
     // ==========================================
     // Handlers
@@ -113,6 +119,21 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
             toast.success("Assignment created!");
         }
         setIsCreatingSession(false);
+    };
+
+    const handlePracticeLaunch = async () => {
+        if (!user || !quizData?.id) return;
+
+        setIsStartingPractice(true);
+        const response = await startPracticeQuiz(quizData.id, user.id, "Practice Mode");
+
+        if (response.error || !response.sessionId || !response.participantId) {
+            toast.error(response.error || "Failed to start practice.");
+            setIsStartingPractice(false);
+        } else {
+            localStorage.setItem(`participant_${response.sessionId}`, response.participantId);
+            router.push(`/play/${response.sessionId}`);
+        }
     };
 
     const handleCopyLink = async () => {
@@ -276,46 +297,68 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                     {/* Desktop Divider */}
                     <div className="hidden sm:block w-px h-6 bg-slate-600 mx-1 shrink-0"></div>
 
-                    {/* Edit */}
-                    {isEditing ? (
-                        <>
-                            <button onClick={() => setIsEditing(false)} className="px-3 py-2 h-10 sm:h-auto text-sm font-bold text-slate-300 hover:text-white transition-colors shrink-0">
-                                Cancel
+                    {/* Edit - Only visible to teachers */}
+                    {!isStudent && (
+                        isEditing ? (
+                            <>
+                                <button onClick={() => setIsEditing(false)} className="px-3 py-2 h-10 sm:h-auto text-sm font-bold text-slate-300 hover:text-white transition-colors shrink-0">
+                                    Cancel
+                                </button>
+                                <button onClick={handleSaveChanges} disabled={isSavingEdits} className="flex items-center justify-center gap-2 px-4 py-2 h-10 sm:h-auto text-sm font-bold text-white bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors disabled:opacity-70 shrink-0">
+                                    {isSavingEdits ? "Saving..." : <><Save className="w-4 h-4" /> Save</>}
+                                </button>
+                            </>
+                        ) : (
+                            <button onClick={() => setIsEditing(true)} className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto px-3 py-2 text-sm font-bold text-slate-900 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors shrink-0">
+                                <Edit className="w-5 h-5 sm:w-4 sm:h-4" />
+                                <span className="hidden sm:inline">Edit</span>
                             </button>
-                            <button onClick={handleSaveChanges} disabled={isSavingEdits} className="flex items-center justify-center gap-2 px-4 py-2 h-10 sm:h-auto text-sm font-bold text-white bg-[#4ce0a3] rounded-lg hover:bg-[#3bc48b] transition-colors disabled:opacity-70 shrink-0">
-                                {isSavingEdits ? "Saving..." : <><Save className="w-4 h-4" /> Save</>}
-                            </button>
-                        </>
-                    ) : (
-                        <button onClick={() => setIsEditing(true)} className="flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 h-10 sm:h-auto text-sm font-bold text-slate-900 bg-slate-200 rounded-lg hover:bg-slate-300 transition-colors shrink-0">
-                            <Edit className="w-4 h-4" /> Edit
-                        </button>
+                        )
                     )}
 
-                    {/* Assign */}
+                    {/* ROLE-BASED PRIMARY BUTTONS */}
                     {user && quizData.id && (
-                        <button onClick={() => setIsAssigning(true)} className="flex items-center justify-center gap-1.5 gap-2 w-10 h-10 w-auto h-auto px-3 py-2 text-sm font-bold text-slate-900 bg-amber-300 rounded-lg hover:bg-amber-400 transition-colors print:hidden shrink-0">
-                            <CalendarClock className='w-5 h-5 sm:w-4 sm:h-4' />
-                            <span>Assign</span>
-                        </button>
+                        isStudent ? (
+                            <>
+                                {/* Flashcards */}
+                                <button onClick={() => router.push(`/study/${quizData.id}`)} className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto px-3 py-2 text-sm font-bold text-emerald-900 bg-emerald-300 rounded-lg hover:bg-emerald-400 transition-colors print:hidden shrink-0">
+                                    <BookOpen className='w-5 h-5 sm:w-4 sm:h-4' />
+                                    <span className="hidden sm:inline">Flashcards</span>
+                                </button>
+                                {/* Practice */}
+                                <button
+                                    onClick={handlePracticeLaunch}
+                                    disabled={isStartingPractice}
+                                    className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto px-3 py-2 text-sm font-bold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors print:hidden shrink-0 disabled:opacity-70"
+                                >
+                                    {isStartingPractice ? <Loader2 className="w-5 h-5 sm:w-4 sm:h-4 animate-spin" /> : <BrainCircuit className='w-5 h-5 sm:w-4 sm:h-4' />}
+                                    <span className="hidden sm:inline">{isStartingPractice ? "Starting..." : "Practice"}</span>
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                {/* Assign */}
+                                <button onClick={() => setIsAssigning(true)} className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto px-3 py-2 text-sm font-bold text-slate-900 bg-amber-300 rounded-lg hover:bg-amber-400 transition-colors print:hidden shrink-0">
+                                    <CalendarClock className='w-5 h-5 sm:w-4 sm:h-4' />
+                                    <span className="hidden sm:inline">Assign</span>
+                                </button>
+                                {/* Live */}
+                                <button
+                                    onClick={() => setIsLaunchingLive(true)}
+                                    className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto px-3 py-2 text-sm font-bold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors print:hidden shrink-0"
+                                >
+                                    <Play className='w-5 h-5 sm:w-4 sm:h-4' fill="currentColor" />
+                                    <span className="hidden sm:inline">Live</span>
+                                </button>
+                            </>
+                        )
                     )}
 
-                    {/* Live */}
-                    {user && quizData.id && (
-                        <button
-                            onClick={() => setIsLaunchingLive(true)}
-                            className="flex items-center justify-center gap-1.5 gap-2 w-10 h-10 w-auto h-auto px-3 py-2 text-sm font-bold text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition-colors print:hidden shrink-0"
-                        >
-                            <Play className='w-5 h-5 sm:w-4 sm:h-4' fill="currentColor" />
-                            <span>Live</span>
-                        </button>
-                    )}
-
-                    {/* Delete */}
+                    {/* Delete (Shared by both roles) */}
                     {user && (
-                        <button onClick={() => setIsDeleting(true)} className="flex items-center justify-center gap-1.5 gap-2 w-10 h-10 w-auto h-auto px-3 py-2 text-sm font-bold text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors print:hidden shrink-0">
+                        <button onClick={() => setIsDeleting(true)} className="flex items-center justify-center gap-1.5 sm:gap-2 w-10 h-10 sm:w-auto sm:h-auto px-3 py-2 text-sm font-bold text-white bg-rose-500 rounded-lg hover:bg-rose-600 transition-colors print:hidden shrink-0">
                             <Trash className='w-5 h-5 sm:w-4 sm:h-4' />
-                            <span>Delete</span>
+                            <span className="hidden sm:inline">Delete</span>
                         </button>
                     )}
                 </div>
