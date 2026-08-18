@@ -67,11 +67,9 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
         setIsLoggingOut(false);
         toast.success("Logged out")
         router.refresh();
-
     }
 
     return (
-        // FIX 1: Added z-50 here so the entire navbar sits above the button's z-30
         <div className="fixed w-full bg-darker flex py-4 items-center justify-between px-4 z-50 font-inter">
             <div className="flex gap-2 items-center">
                 <Menu onClick={toggleMenu} strokeWidth={3} className="w-10 h-10 text-white cursor-pointer" />
@@ -85,35 +83,35 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
             )}
             <button onClick={toggleSignIn} hidden={!!user} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">Sign In</button>
 
-            {/* FIX 2: Applied conditional visibility to the backdrop */}
             <div
                 onClick={toggleMenu}
                 className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                     }`}
             >
-                {/* FIX 3: Applied the -translate-x-full transition to actually slide the menu */}
                 <aside
-                    onClick={(e) => e.stopPropagation()} // Prevents clicking the menu itself from closing it
+                    onClick={(e) => e.stopPropagation()}
                     className={`fixed top-0 left-0 h-full bg-darker z-50 w-72 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
                         }`}
                 >
-
                     <div className="p-4 flex flex-col h-full">
-                        <div className="flex justify-between items-center mb-10">
+
+                        <div className="flex justify-between items-center mb-10 shrink-0">
                             <Logo />
-                            <PanelRightClose onClick={toggleMenu} className="-scale-x-100 w-6 h-6 text-white" />
+                            <PanelRightClose onClick={toggleMenu} className="-scale-x-100 w-6 h-6 text-white cursor-pointer hover:text-slate-300" />
                         </div>
-                        <div className="text-white">
-                            <div className="flex flex-col py-2 gap-2 mb-6">
+
+                        <div className="text-white flex-1 flex flex-col min-h-0 pb-4">
+                            <div className="flex flex-col py-2 gap-2 mb-6 shrink-0">
                                 <Link href="/" className="flex gap-2 w-full py-2 hover:bg-slate-800 rounded-md px-2 cursor-pointer"><Plus />New quiz</Link>
                                 <Link hidden={!user} href="/dashboard" className="flex gap-2 py-2 w-full hover:bg-slate-800 rounded-md px-2 cursor-pointer"><LayoutDashboard />Dashboard</Link>
                             </div>
-                            <p className="text-gray-400 mb-2 text-sm">Recent quizzes</p>
-                            <hr />
-                            <div className="flex flex-col h-140 overflow-y-auto text-white gap-3 py-3">
+
+                            <p className="text-gray-400 mb-2 text-sm shrink-0">Recent quizzes</p>
+                            <hr className="shrink-0 border-slate-700" />
+
+                            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto text-white gap-3 py-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                 {user ? (
                                     [...user.quizzes].reverse().map((quiz) => {
-                                        // AUTHENTICATED CHECK: Does the URL match this quiz?
                                         const isActive = pathname === `/quiz/${quiz.id}`;
 
                                         return (
@@ -121,7 +119,7 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                                                 key={quiz.id}
                                                 href={`/quiz/${quiz.id}`}
                                                 onClick={toggleMenu}
-                                                className={`flex items-center w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 ${isActive
+                                                className={`flex items-center w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 shrink-0 ${isActive
                                                     ? 'bg-[#4ce0a3]/10 text-[#4ce0a3] border-[#4ce0a3] font-medium'
                                                     : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'
                                                     }`}
@@ -132,7 +130,6 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                                     })
                                 ) : (
                                     localQuizzes.map((quiz) => {
-                                        // ANONYMOUS CHECK: Does the open modal ID match this quiz?
                                         const isActive = activeQuizId === quiz.id;
 
                                         return (
@@ -142,7 +139,7 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                                                     toggleMenu();
                                                     if (onOpenLocalQuiz) onOpenLocalQuiz(quiz);
                                                 }}
-                                                className={`flex items-center text-left w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 ${isActive
+                                                className={`flex items-center text-left w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 shrink-0 ${isActive
                                                     ? 'bg-[#4ce0a3]/10 text-[#4ce0a3] border-[#4ce0a3] font-medium'
                                                     : 'text-slate-300 hover:bg-slate-800 hover:text-white border-transparent'
                                                     }`}
@@ -154,43 +151,52 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                                 )}
                             </div>
                         </div>
+
+
                         {!user && (
-                            <div className="flex flex-col items-center justify-center gap-2">
+                            <div className="flex flex-col items-center justify-center gap-2 shrink-0 mb-4">
                                 <button onClick={toggleSignIn} hidden={!!user} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">Sign In</button>
                                 <p className="text-white text-sm">Sign In to access more features</p>
                             </div>
                         )}
-                        {/* Account section */}
-                        <div className="flex items-center justify-between px-2 mt-auto">
-                            <div className="flex items-center">
+
+                        <div className="flex items-center justify-between px-2 mt-auto shrink-0 pb-2">
+                            <div className="flex items-center gap-3">
                                 <CircleUserRound className="w-8 h-8 text-white" />
                                 <div className="flex flex-col text-white">
-                                    <p>{user?.name}</p>
-                                    <p>{user?.role}</p>
+                                    <p className="font-semibold text-sm">{user?.name || 'Guest'}</p>
+                                    <p className="text-xs text-slate-400 capitalize">{user?.role?.toLowerCase() || 'Anonymous'}</p>
                                 </div>
                             </div>
                             {!!user && (
-                                <LogOut onClick={toggleLogout} className="text-red-400 cursor-pointer rounded-full w-8 h-8" />
+                                <button onClick={toggleLogout} className="text-red-400 hover:bg-slate-800 p-2 rounded-full transition-colors">
+                                    <LogOut className="w-5 h-5" />
+                                </button>
                             )}
                         </div>
                     </div>
 
-
-
                 </aside>
             </div>
+
             {isSigningIn && (
                 <SignupModal onClose={toggleSignIn} />
             )}
 
             {isLoggingOut && (
                 <div onClick={toggleLogout} className='bg-black/50 z-50 fixed inset-0 flex h-dvh items-center justify-center'>
-                    <div className='z-[60] bg-white p-10 mx-8 flex flex-col items-center gap-2 rounded-md'>
-                        <p className='flex text-2xl items-center pr-2'><LogOut className='w-8 h-8 pt-0.5 text-red-500' />Log out?</p>
-                        <p>Are you sure you want to log out?</p>
-                        <div className='flex gap-4 mt-4'>
-                            <button onClick={toggleLogout} className='bg-slate-200 text-black text-xl font-semibold px-4 py-2 rounded-md hover:bg-slate-300 transition-colors duration-300'>Cancel</button>
-                            <button className='bg-red-500 text-white text-xl font-semibold px-4 py-2 rounded-md flex gap-2 items-center hover:bg-red-700 transition-colors duration-300' onClick={handleLogOut}>{isPending && (<Cog className="animate-spin" />)}Confirm</button>
+                    <div onClick={(e) => e.stopPropagation()} className='z-[60] bg-white p-8 mx-4 max-w-sm w-full flex flex-col items-center gap-4 rounded-xl shadow-2xl'>
+                        <div className="flex flex-col items-center gap-2 text-center">
+                            <LogOut className='w-10 h-10 text-red-500' />
+                            <h2 className='text-2xl font-bold text-slate-800'>Log out?</h2>
+                            <p className="text-slate-500">Are you sure you want to log out of your account?</p>
+                        </div>
+                        <div className='flex gap-3 w-full mt-2'>
+                            <button onClick={toggleLogout} className='flex-1 bg-slate-100 text-slate-700 font-semibold py-3 rounded-lg hover:bg-slate-200 transition-colors'>Cancel</button>
+                            <button className='flex-1 bg-red-500 text-white font-semibold py-3 rounded-lg flex gap-2 justify-center items-center hover:bg-red-600 transition-colors' onClick={handleLogOut}>
+                                {isPending ? <Cog className="animate-spin w-5 h-5" /> : null}
+                                Confirm
+                            </button>
                         </div>
                     </div>
                 </div>
