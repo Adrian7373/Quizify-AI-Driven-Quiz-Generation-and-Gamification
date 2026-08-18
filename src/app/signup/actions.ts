@@ -3,7 +3,6 @@ import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/prisma"
-import { headers } from "next/headers"
 import { Role } from "@/generated/prisma/enums"
 
 export async function signUp(formData: FormData) {
@@ -14,11 +13,6 @@ export async function signUp(formData: FormData) {
 
     const supabase = await createClient()
 
-    const origin = (await headers()).get('origin')
-    const redirectTo = origin
-        ? `${origin}/api/auth/callback`
-        : `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/auth/callback`
-
     // 1. Create the user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -26,9 +20,8 @@ export async function signUp(formData: FormData) {
         options: {
             data: {
                 full_name: name,
-                emailRedirectTo: redirectTo
-            },
-        },
+            }
+        }
     })
 
     if (authError) {
@@ -39,7 +32,6 @@ export async function signUp(formData: FormData) {
     // 2. Auth Sync: Create the matching Prisma profile
     if (authData.user) {
         try {
-            // We check if it exists first just in case they clicked twice
             const existingUser = await prisma.user.findUnique({
                 where: { id: authData.user.id }
             })
@@ -50,7 +42,7 @@ export async function signUp(formData: FormData) {
                         id: authData.user.id, // Must match Supabase exactly
                         email: authData.user.email!,
                         name: name,
-                        aiCredits: 10, // Give them starting credits!
+                        aiCredits: 10,
                         role: role
                     },
                 })
@@ -59,6 +51,12 @@ export async function signUp(formData: FormData) {
             console.error("Failed to sync user to Prisma:", prismaError)
         }
     }
+
+    // This makes sure they don't get kicked back to the login screen after signing up.
+    await supabase.auth.signInWithPassword({
+        email,
+        password
+    })
 
     revalidatePath('/')
     redirect('/dashboard')
