@@ -4,10 +4,24 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { FaFacebook } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
-import Link from "next/link";
 import { signUp } from "../signup/actions";
 import { signInWithProvider } from "../login/actions";
 import LoginModal from "./LoginModal";
+import { useFormStatus } from "react-dom";
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+
+    return (
+        <button
+            type="submit"
+            disabled={pending} // Disables the button while the server action runs
+            className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors mt-4 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+            {pending ? "Sending Verification Email..." : "Sign Up"}
+        </button>
+    );
+}
 
 interface SignUpProps {
     onClose: () => void
@@ -104,12 +118,7 @@ export default function SignupModal({ onClose }: SignUpProps) {
                                 </button>
                             </div>
 
-                            <button
-                                type="submit"
-                                className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors mt-4"
-                            >
-                                Sign Up
-                            </button>
+                            <SubmitButton />
                         </form>
 
                         {/* DIVIDER */}
@@ -152,8 +161,6 @@ export default function SignupModal({ onClose }: SignUpProps) {
             ) : (
                 <LoginModal onClose={onClose} onCreateAccount={toggleSignIn} />
             )}
-
         </>
-
     );
 }
