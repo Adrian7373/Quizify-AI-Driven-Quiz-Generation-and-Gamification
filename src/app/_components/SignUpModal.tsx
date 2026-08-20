@@ -132,6 +132,7 @@ export default function SignupModal({ onClose }: SignUpProps) {
                         <form action={signInWithProvider} className="flex flex-col items-center gap-3">
                             <button
                                 type="submit"
+                                hidden
                                 name="provider"
                                 value="facebook"
                                 className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors"
