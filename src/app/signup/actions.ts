@@ -1,32 +1,37 @@
 "use server"
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
+import { headers } from "next/headers"
 import prisma from "@/lib/prisma"
 
 export async function signUp(formData: FormData) {
     const name = formData.get('name') as string
     const email = (formData.get('email') as string)?.trim().toLowerCase()
     const password = formData.get('password') as string
-    const rawRole = (formData.get("role") as string);
-    const role = (rawRole === "TEACHER" ? "TEACHER" : "STUDENT") as "TEACHER" | "STUDENT";
+
+    // Using string fallback to avoid Vercel build errors we fixed earlier
+    const rawRole = formData.get("role") as string
+    const role = (rawRole === "TEACHER" ? "TEACHER" : "STUDENT") as "TEACHER" | "STUDENT"
 
     const supabase = await createClient()
+    const origin = (await headers()).get('origin')
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+    const baseUrl = origin || siteUrl
+
+    const redirectTo = `${baseUrl}/api/auth/callback?next=/verified`
 
     // 1. Create the user in Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-            data: {
-                full_name: name,
-            }
+            data: { full_name: name },
+            emailRedirectTo: redirectTo
         }
     })
 
     if (authError) {
-        console.error("Signup error:", authError)
-        redirect(`/signup?error=${encodeURIComponent(authError.message || 'Could not create account')}`)
+        redirect(`/signup?error=${encodeURIComponent(authError.message)}`)
     }
 
     // 2. Auth Sync: Create the matching Prisma profile
@@ -39,7 +44,7 @@ export async function signUp(formData: FormData) {
             if (!existingUser) {
                 await prisma.user.create({
                     data: {
-                        id: authData.user.id, // Must match Supabase exactly
+                        id: authData.user.id,
                         email: authData.user.email!,
                         name: name,
                         aiCredits: 10,
@@ -52,12 +57,5 @@ export async function signUp(formData: FormData) {
         }
     }
 
-    // This makes sure they don't get kicked back to the login screen after signing up.
-    await supabase.auth.signInWithPassword({
-        email,
-        password
-    })
-
-    revalidatePath('/')
-    redirect('/dashboard')
+    redirect('/login?message=Confirmation emails sent. Please verify before logging in')
 }
