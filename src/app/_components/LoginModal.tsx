@@ -121,10 +121,13 @@ export default function LoginModal({ onClose, onCreateAccount }: LoginModalProps
                 </div>
 
                 <form action={signInWithProvider} className="flex flex-col items-center gap-3">
+                    {/* 
                     <SocialButton provider="facebook">
                         <FaFacebook color="#1877F2" className="text-xl" />
                         Continue with Facebook
                     </SocialButton>
+                    */}
+
 
                     <SocialButton provider="google">
                         <FcGoogle className="text-xl" />
