@@ -5,6 +5,37 @@ import { useState } from "react";
 import { FaFacebook } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
 import { login, signInWithProvider } from "../login/actions";
+import { useFormStatus } from "react-dom";
+
+function LoginSubmitButton() {
+    const { pending } = useFormStatus();
+
+    return (
+        <button
+            type="submit"
+            disabled={pending}
+            className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors mt-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+            {pending ? "Signing In..." : "Sign In"}
+        </button>
+    );
+}
+
+function SocialButton({ provider, children }: { provider: string, children: React.ReactNode }) {
+    const { pending } = useFormStatus();
+
+    return (
+        <button
+            type="submit"
+            name="provider"
+            value={provider}
+            disabled={pending}
+            className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+        >
+            {pending ? "Connecting..." : children}
+        </button>
+    );
+}
 
 interface LoginModalProps {
     onClose: () => void;
@@ -80,12 +111,7 @@ export default function LoginModal({ onClose, onCreateAccount }: LoginModalProps
                         </button>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors mt-2"
-                    >
-                        Sign In
-                    </button>
+                    <LoginSubmitButton />
                 </form>
 
                 <div className="flex items-center py-4">
@@ -95,25 +121,15 @@ export default function LoginModal({ onClose, onCreateAccount }: LoginModalProps
                 </div>
 
                 <form action={signInWithProvider} className="flex flex-col items-center gap-3">
-                    <button
-                        type="submit"
-                        name="provider"
-                        value="facebook"
-                        className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors"
-                    >
+                    <SocialButton provider="facebook">
                         <FaFacebook color="#1877F2" className="text-xl" />
                         Continue with Facebook
-                    </button>
+                    </SocialButton>
 
-                    <button
-                        type="submit"
-                        name="provider"
-                        value="google"
-                        className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors"
-                    >
+                    <SocialButton provider="google">
                         <FcGoogle className="text-xl" />
                         Continue with Google
-                    </button>
+                    </SocialButton>
                 </form>
 
                 <div className="mt-4 text-center text-sm text-gray-300">
