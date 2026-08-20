@@ -114,6 +114,7 @@ export default function SignupPage() {
                     <button
                         type="submit"
                         name="provider"
+                        hidden
                         value="facebook"
                         className="flex items-center gap-2 bg-white text-black w-full justify-center py-3 rounded-sm font-semibold hover:bg-gray-200 transition-colors"
                     >
