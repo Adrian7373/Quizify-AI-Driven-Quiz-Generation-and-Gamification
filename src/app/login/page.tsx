@@ -1,12 +1,23 @@
 "use client";
 
+import { use, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
 import { FaFacebook } from "react-icons/fa6";
 import { FcGoogle } from "react-icons/fc";
-import { signInWithProvider, login } from "./actions"; // Import both actions
+import { signInWithProvider, login } from "./actions";
 
-export default function LoginPage() {
+
+interface LoginPageProps {
+    searchParams: Promise<{
+        message?: string;
+        error?: string;
+    }>;
+}
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+
+    const resolvedParams = use(searchParams);
+
     const [isShowing, setIsShowing] = useState(false);
 
     const handleToggleShow = () => {
@@ -19,6 +30,19 @@ export default function LoginPage() {
                 <h1 className="text-center text-white text-xl font-semibold mb-6">
                     Sign In
                 </h1>
+
+                {/* 4. Use the unwrapped params here */}
+                {resolvedParams?.message && (
+                    <div className="bg-mint/20 border border-mint text-mint px-4 py-3 rounded-md mb-6 text-sm text-center">
+                        {resolvedParams.message}
+                    </div>
+                )}
+
+                {resolvedParams?.error && (
+                    <div className="bg-red-500/20 border border-red-500 text-red-500 px-4 py-3 rounded-md mb-6 text-sm text-center">
+                        {resolvedParams.error}
+                    </div>
+                )}
 
                 {/* 1. EMAIL & PASSWORD FORM */}
                 <form action={login} className="text-white flex flex-col gap-3">
@@ -41,7 +65,6 @@ export default function LoginPage() {
                                 className="border-r border-white py-2 focus:outline-none px-2 flex-grow bg-transparent text-white"
                                 required
                             />
-                            {/* type="button" stops this from submitting the form */}
                             <button
                                 type="button"
                                 onClick={handleToggleShow}
@@ -61,7 +84,6 @@ export default function LoginPage() {
                             />
                             Remember me
                         </label>
-                        {/* type="button" prevents accidental form submission */}
                         <button type="button" className="underline hover:text-gray-300">
                             Forgot password?
                         </button>
