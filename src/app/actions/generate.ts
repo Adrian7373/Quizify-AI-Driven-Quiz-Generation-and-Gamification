@@ -161,6 +161,16 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         const difficulty = formData.get("difficulty") as string;
         const language = formData.get("language") as string;
 
+        const parsedCount = parseInt(questionCount, 10) || 10;
+        const requiredCredits = Math.max(1, Math.ceil(parsedCount / 10));
+
+        if (user.aiCredits < requiredCredits) {
+            return {
+                error: `Not enough credits. This ${parsedCount}-question quiz requires ${requiredCredits} credits.`,
+                reason: "credits"
+            };
+        }
+
         const flaskFormData = new FormData();
         flaskFormData.append("quizType", quizType ?? "Multiple Choice");
         flaskFormData.append("questionCount", questionCount ?? "10");
@@ -198,7 +208,7 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
                 },
                 data: {
                     aiCredits: {
-                        decrement: 1
+                        decrement: requiredCredits
                     }
                 }
             })
