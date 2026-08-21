@@ -164,7 +164,13 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 {currentTab === "quizzes" && (
                     quizzes.length === 0 ? (
                         <div className="bg-white border border-slate-200 rounded-xl p-8 sm:p-12 text-center flex flex-col items-center">
-                            {/* ... Empty State ... */}
+                            <div className="bg-indigo-50 p-4 rounded-full mb-4">
+                                <FileQuestion className="w-8 h-8 text-indigo-500" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-slate-800">Your library is empty</h3>
+                            <p className="text-slate-500 mt-2 mb-6 max-w-md text-sm sm:text-base">
+                                You haven't created any quizzes yet. Click the "Generate Quiz" button to build your first AI-powered assessment.
+                            </p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
