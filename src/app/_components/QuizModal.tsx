@@ -180,12 +180,160 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
         }
     };
 
-    // ==========================================
-    // Generators (TXT, DOCX, PDF)
-    // ==========================================
-    const generateTXT = () => { /* ... existing txt logic ... */ };
-    const generateDOCX = async () => { /* ... existing docx logic ... */ };
-    const generatePDF = () => { /* ... existing pdf logic ... */ };
+    const generateTXT = () => {
+        let content = `${editedTitle.toUpperCase()}\n`;
+        content += `${editedDescription}\n`;
+        content += `Difficulty: ${quizData.difficulty.toUpperCase()}\n`;
+        content += `=====================================\n\n`;
+
+        editedQuestions.forEach((q, idx) => {
+            content += `Q${idx + 1}: ${q.questionText}\n`;
+            if (q.options && q.options.length > 0) {
+                q.options.forEach((opt, oIdx) => {
+                    content += `   ${String.fromCharCode(65 + oIdx)}. ${opt}\n`;
+                });
+            } else {
+                content += `   [Identification Question]\n`;
+            }
+            if (includeAnswers) {
+                content += `   -> Correct Answer: ${q.correctAnswer}\n`;
+                content += `   -> Explanation: ${q.explanation}\n`;
+            }
+            content += `\n`;
+        });
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        saveAs(blob, `${editedTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_quiz.txt`);
+        toast.success("Text file downloaded successfully!");
+    };
+
+    const generateDOCX = async () => {
+        try {
+            const docChildren: any[] = [
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: editedTitle, bold: true, size: 32 })
+                    ],
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: editedDescription, italics: true, size: 24 })
+                    ],
+                }),
+                new Paragraph({ text: "" }), // Spacer
+            ];
+
+            editedQuestions.forEach((q, idx) => {
+                docChildren.push(
+                    new Paragraph({
+                        children: [
+                            new TextRun({ text: `Q${idx + 1}: ${q.questionText}`, bold: true, size: 24 })
+                        ],
+                    })
+                );
+
+                if (q.options && q.options.length > 0) {
+                    q.options.forEach((opt, oIdx) => {
+                        docChildren.push(
+                            new Paragraph({
+                                children: [
+                                    new TextRun({ text: `   ${String.fromCharCode(65 + oIdx)}. ${opt}`, size: 20 })
+                                ],
+                            })
+                        );
+                    });
+                }
+
+                if (includeAnswers) {
+                    docChildren.push(
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: `   Correct Answer: ${q.correctAnswer}`, bold: true, color: "008000", size: 20 })
+                            ],
+                        }),
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: `   Explanation: ${q.explanation}`, italics: true, color: "555555", size: 18 })
+                            ],
+                        })
+                    );
+                }
+
+                docChildren.push(new Paragraph({ text: "" })); // Spacer between questions
+            });
+
+            const doc = new Document({
+                sections: [{ children: docChildren }],
+            });
+
+            const blob = await Packer.toBlob(doc);
+            saveAs(blob, `${editedTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_quiz.docx`);
+            toast.success("Word document downloaded successfully!");
+        } catch (error) {
+            console.error("DOCX generation error:", error);
+            toast.error("Failed to generate Word document.");
+        }
+    };
+
+    const generatePDF = () => {
+        try {
+            const doc = new jsPDF();
+            let y = 20;
+
+            doc.setFontSize(20);
+            doc.text(editedTitle, 105, y, { align: "center" });
+            y += 10;
+
+            doc.setFontSize(11);
+            doc.setTextColor(100);
+            doc.text(editedDescription, 105, y, { align: "center" });
+            y += 15;
+
+            doc.setTextColor(0);
+            editedQuestions.forEach((q, idx) => {
+                if (y > 270) { // Page break check
+                    doc.addPage();
+                    y = 20;
+                }
+
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                const splitQuestion = doc.splitTextToSize(`Q${idx + 1}: ${q.questionText}`, 180);
+                doc.text(splitQuestion, 15, y);
+                y += splitQuestion.length * 7;
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                if (q.options && q.options.length > 0) {
+                    q.options.forEach((opt, oIdx) => {
+                        const optText = `   ${String.fromCharCode(65 + oIdx)}. ${opt}`;
+                        const splitOpt = doc.splitTextToSize(optText, 175);
+                        doc.text(splitOpt, 15, y);
+                        y += splitOpt.length * 5;
+                    });
+                }
+
+                if (includeAnswers) {
+                    doc.setTextColor(0, 128, 0);
+                    doc.text(`   Answer: ${q.correctAnswer}`, 15, y);
+                    y += 5;
+                    doc.setTextColor(100, 100, 100);
+                    const splitExp = doc.splitTextToSize(`   Explanation: ${q.explanation}`, 175);
+                    doc.text(splitExp, 15, y);
+                    y += splitExp.length * 5;
+                    doc.setTextColor(0);
+                }
+
+                y += 8; // Spacing after question
+            });
+
+            doc.save(`${editedTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_quiz.pdf`);
+            toast.success("PDF downloaded successfully!");
+        } catch (error) {
+            console.error("PDF generation error:", error);
+            toast.error("Failed to generate PDF.");
+        }
+    }
 
     const handleDownload = (format: 'pdf' | 'docx' | 'txt') => {
         setShowDownloadMenu(false);
@@ -254,8 +402,8 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     };
 
     return (
-        <div className="w-full h-[calc(100vh-80px)] flex flex-col bg-slate-50 font-sans overflow-hidden">
-            <header className="z-40 flex px-3 sm:px-4 py-3 sm:py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0 relative min-h-[72px]">
+        <div className="w-full h-[calc(100vh-80px)] print:h-auto flex flex-col print:block bg-slate-50 font-sans overflow-hidden print:overflow-visible">
+            <header className="print:hidden z-40 flex px-3 sm:px-4 py-3 sm:py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0 relative min-h-[72px]">
 
                 {/* Action Container: flex-wrap with uniform gap, pr-12 ensures buttons don't overlap the absolute close button on mobile */}
                 <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 flex-1 pr-12 sm:pr-0">
@@ -370,7 +518,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
             </header>
 
             {/* 2. MAIN CONTENT AREA (Scrollable) */}
-            <main className="bg-slate-100 flex-1 overflow-y-auto p-4 sm:p-6 md:p-12 print:p-0 print:overflow-visible">
+            <main className="bg-slate-100 flex-1 overflow-y-auto p-4 sm:p-6 md:p-12 print:p-0 print:overflow-visible print:h-auto print:block">
                 <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
                     {/* ... (Your existing Question loops, unchanged) ... */}
                     <div className="flex flex-col min-w-0 items-center justify-center bg-white p-6 sm:p-8 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none mb-6 sm:mb-8">
