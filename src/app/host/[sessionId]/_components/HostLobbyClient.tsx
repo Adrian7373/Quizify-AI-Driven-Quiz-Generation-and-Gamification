@@ -106,7 +106,7 @@ export default function HostLobbyClient({ sessionId, joinCode, quizTitle, initia
             {/* Giant PIN Display */}
             <div className="flex-1 flex flex-col items-center justify-center p-8">
                 <p className="text-2xl text-slate-300 font-semibold mb-4 text-center">
-                    Join at <span className="text-white font-black underline">quizify.vercel.app/join</span> with PIN:
+                    Join at <span className="text-white font-black underline">https://quizify-ai-driven-quiz-generation-a-zeta.vercel.app/join</span> with PIN:
                 </p>
                 <div className="bg-white px-16 py-8 rounded-3xl shadow-[0_0_50px_rgba(99,102,241,0.4)] mb-12">
                     <p className="text-8xl md:text-[10rem] font-black text-slate-900 tracking-[0.1em] leading-none text-center">
