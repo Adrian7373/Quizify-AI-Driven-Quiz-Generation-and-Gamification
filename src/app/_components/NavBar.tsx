@@ -70,7 +70,7 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
     }
 
     return (
-        <div className="fixed w-full bg-darker flex py-4 items-center justify-between px-4 z-50 font-inter">
+        <div className="print:hidden fixed w-full bg-darker flex py-4 items-center justify-between px-4 z-50 font-inter">
             <div className="flex gap-2 items-center">
                 <Menu onClick={toggleMenu} strokeWidth={3} className="w-10 h-10 text-white cursor-pointer" />
                 <Logo />
