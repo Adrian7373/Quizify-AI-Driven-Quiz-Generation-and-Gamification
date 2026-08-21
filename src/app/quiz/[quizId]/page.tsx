@@ -38,7 +38,9 @@ export default async function QuizPage({ params }: QuizPageProps) {
 
     return (
         <>
-            <NavBar user={appUser} />
+            <div className="print:hidden">
+                <NavBar user={appUser} />
+            </div>
             <div className="pt-20 h-screen flex flex-col">
                 <QuizModal isOpen={true} quizData={quizData as unknown as QuizData} user={appUser} />
             </div>
