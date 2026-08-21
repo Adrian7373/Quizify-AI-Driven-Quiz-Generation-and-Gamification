@@ -37,8 +37,11 @@ export async function signInWithProvider(formData: FormData) {
 export async function login(formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+    const isRemembered = formData.get("rememberMe") === "on";
 
-    const supabase = await createClient()
+    console.log(formData);
+
+    const supabase = await createClient(isRemembered);
 
     const { error } = await supabase.auth.signInWithPassword({
         email,
