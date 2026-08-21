@@ -47,7 +47,7 @@ export async function signUp(formData: FormData) {
                         id: authData.user.id,
                         email: authData.user.email!,
                         name: name,
-                        aiCredits: 10,
+                        aiCredits: 20,
                         role: role
                     },
                 })
