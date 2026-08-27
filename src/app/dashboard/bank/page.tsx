@@ -6,11 +6,11 @@ import { getUser } from "@/app/actions";
 import QuestionBankClient from "./_components/QuestionBankClient";
 
 interface QuestionBankPageProps {
-    searchParams: Promise<{ page?: string; search?: string }>;
+    searchParams: Promise<{ page?: string; search?: string; type?: string; }>;
 }
 
 export default async function QuestionBankPage({ searchParams }: QuestionBankPageProps) {
-    const { page, search } = await searchParams;
+    const { page, search, type } = await searchParams;
 
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -26,11 +26,16 @@ export default async function QuestionBankPage({ searchParams }: QuestionBankPag
     const currentPage = Math.max(1, parseInt(page || "1"));
     const skip = (currentPage - 1) * PAGE_SIZE;
     const searchTerm = search || "";
+    const questionType = type || "ALL";
 
     // Build the Prisma where clause dynamically
     const whereClause: any = {
         quiz: { creatorId: authUser.id }
     };
+
+    if (questionType !== "ALL") {
+        whereClause.questionType = questionType;
+    }
 
     if (searchTerm) {
         whereClause.OR = [
@@ -66,6 +71,7 @@ export default async function QuestionBankPage({ searchParams }: QuestionBankPag
                     totalPages={totalPages}
                     totalCount={totalQuestionsCount}
                     initialSearch={searchTerm}
+                    initialType={questionType}
                 />
             </main>
         </div>
