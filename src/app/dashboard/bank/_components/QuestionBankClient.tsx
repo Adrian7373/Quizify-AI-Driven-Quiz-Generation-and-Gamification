@@ -14,6 +14,7 @@ interface QuestionBankClientProps {
     totalPages: number;
     totalCount: number;
     initialSearch: string;
+    initialType: string;
 }
 
 export default function QuestionBankClient({
@@ -22,7 +23,8 @@ export default function QuestionBankClient({
     currentPage,
     totalPages,
     totalCount,
-    initialSearch
+    initialSearch,
+    initialType
 }: QuestionBankClientProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -30,6 +32,7 @@ export default function QuestionBankClient({
 
     const [searchInput, setSearchInput] = useState(initialSearch);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [selectedQuestionType, setSelectedQuestionType] = useState("ALL");
 
     // Modal State
     const [isCreating, setIsCreating] = useState(false);
@@ -41,20 +44,30 @@ export default function QuestionBankClient({
     useEffect(() => {
         const timer = setTimeout(() => {
             const params = new URLSearchParams(searchParams.toString());
+            let hasChanges = false;
 
+            // Handle Search Text Changes
             if (searchInput !== initialSearch) {
-                if (searchInput) {
-                    params.set('search', searchInput);
-                } else {
-                    params.delete('search');
-                }
-                params.set('page', '1'); // Always reset to page 1 on a new search
+                if (searchInput) params.set('search', searchInput);
+                else params.delete('search');
+                hasChanges = true;
+            }
+
+            // ✅ Handle Question Type Dropdown Changes
+            if (selectedQuestionType !== initialType) {
+                if (selectedQuestionType !== "ALL") params.set('type', selectedQuestionType);
+                else params.delete('type');
+                hasChanges = true;
+            }
+
+            if (hasChanges) {
+                params.set('page', '1'); // Always reset to page 1 on a new search/filter
                 router.push(`${pathname}?${params.toString()}`);
             }
-        }, 500); // Wait 500ms after the user stops typing
+        }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchInput, pathname, router, searchParams, initialSearch]);
+    }, [searchInput, selectedQuestionType, pathname, router, searchParams, initialSearch, initialType]);
 
     // --- Pagination Handlers ---
     const handlePageChange = (newPage: number) => {
@@ -121,18 +134,35 @@ export default function QuestionBankClient({
                         <p className="text-slate-500 mt-1">Mix and match your past questions to create a new quiz.</p>
                     </div>
 
-                    <div className="relative w-full md:w-96">
-                        <Search className="w-5 h-5 absolute left-3 top-3.5 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Search questions or quiz titles..."
-                            value={searchInput}
-                            onChange={(e) => setSearchInput(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-[#4ce0a3] focus:outline-none transition-colors"
-                        />
+                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                        <div className="relative w-full md:w-96">
+                            <Search className="w-5 h-5 absolute left-3 top-3.5 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Search questions or quiz titles..."
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                className="w-full pl-10 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:border-[#4ce0a3] focus:outline-none transition-colors"
+                            />
+                        </div>
+                        <div className="shrink-0 w-full sm:w-48">
+                            <select
+                                value={selectedQuestionType}
+                                onChange={(e) => setSelectedQuestionType(e.target.value)}
+                                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-[#4ce0a3] focus:outline-none transition-colors bg-white font-semibold text-slate-700 cursor-pointer appearance-none"
+                            >
+                                <option value="ALL">All Types</option>
+                                <option value="MULTIPLE_CHOICE">Multiple Choice</option>
+                                <option value="TRUE_FALSE">True/False</option>
+                                <option value="IDENTIFICATION">Identification</option>
+                                <option value="ESSAY">Essay</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
+
+
 
             {/* List Controls */}
             <div className="flex justify-between items-center mb-4 px-2">
