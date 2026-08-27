@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import NavBar from "@/app/_components/NavBar";
 import SettingsClient from "./_components/SettingsClient";
 import { getUser } from "@/app/actions";
+import { AppUser } from "@/app/page";
 
 export default async function SettingsPage() {
     const supabase = await createClient();
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
 
     // Fetch full user details from Prisma
     const userResponse = await getUser(authUser.id);
-    const appUser = userResponse.user;
+    const appUser = userResponse.user as unknown as AppUser;
 
     if (!appUser) {
         redirect("/");
