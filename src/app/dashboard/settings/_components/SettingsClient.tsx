@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { User, Shield, Bell, Sparkles, LogOut, Save } from "lucide-react";
 import { AppUser } from "@/app/page";
+import { updateAccountProfile } from "../actions";
+import toast from "react-hot-toast";
+import { error } from "node:console";
 
 type Tab = "account" | "preferences" | "security" | "credits";
+type Role = "TEACHER" | "STUDENT";
 
 interface SettingsClientProps {
     user: AppUser;
@@ -16,18 +20,33 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 
     // Form states for the Account tab
     const [name, setName] = useState(user.name || "");
+    const [role, setRole] = useState<Role>(user.role as Role || "TEACHER");
+
+    const hasChanges = name !== (user.name || "") || role !== user.role;
 
     const handleAccountSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
 
+        try {
+            const response = await updateAccountProfile(user.id, name, role);
+
+            if (response?.error) {
+                toast.error(response.error)
+            } else {
+                toast.success(response.message)
+            }
+        }
+        finally {
+            setIsSaving(false);
+        }
     };
 
     const tabs = [
         { id: "account", label: "Account Profile", icon: User },
         { id: "preferences", label: "Preferences", icon: Bell },
         { id: "security", label: "Security", icon: Shield },
-        ...(user.role === "TEACHER" ? [{ id: "credits", label: "AI Credits", icon: Sparkles }] : []),
+        { id: "credits", label: "AI Credits", icon: Sparkles },
     ];
 
     return (
@@ -86,13 +105,39 @@ export default function SettingsClient({ user }: SettingsClientProps) {
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Account Role</label>
-                                <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${user.role === "TEACHER" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>
-                                    {user.role}
-                                </span>
+                                <div className="flex border-2 border-slate-200 items-center rounded-lg overflow-hidden max-w-[240px]">
+                                    <button
+                                        type="button"
+                                        onClick={() => setRole("TEACHER")}
+                                        className={`flex-1 px-3 py-2.5 text-sm font-bold transition-colors ${role === "TEACHER"
+                                            ? "bg-indigo-50 text-indigo-600"
+                                            : "bg-transparent text-slate-500 hover:bg-slate-50"
+                                            }`}
+                                    >
+                                        Teacher
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setRole("STUDENT")}
+                                        className={`flex-1 px-3 py-2.5 text-sm font-bold transition-colors border-l-2 border-slate-200 ${role === "STUDENT"
+                                            ? "bg-indigo-50 text-indigo-600"
+                                            : "bg-transparent text-slate-500 hover:bg-slate-50"
+                                            }`}
+                                    >
+                                        Student
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-2">
+                                    Teachers can assign quizzes and host live games. Students can use quizzes for flashcards and practice.
+                                </p>
                             </div>
 
                             <div className="pt-4 border-t border-slate-100">
-                                <button type="submit" disabled={isSaving} className="flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors disabled:opacity-70">
+                                <button
+                                    type="submit"
+                                    disabled={isSaving || !hasChanges}
+                                    className="flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed duration:500"
+                                >
                                     <Save className="w-5 h-5" />
                                     {isSaving ? "Saving..." : "Save Changes"}
                                 </button>
@@ -143,8 +188,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                     </div>
                 )}
 
-                {/* --- CREDITS TAB (Teachers Only) --- */}
-                {activeTab === "credits" && user.role === "TEACHER" && (
+                {/* --- CREDITS TAB --- */}
+                {activeTab === "credits" && (
                     <div className="animate-in fade-in duration-300">
                         <h2 className="text-2xl font-bold text-slate-800 mb-6">AI Credits</h2>
 
