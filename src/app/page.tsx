@@ -31,6 +31,7 @@ export interface QuizInfo {
 export type AppUser = {
   id: string;
   name: string | null;
+  email: string;
   role: string;
   aiCredits: number;
   quizzes: QuizInfo[]
