@@ -16,6 +16,7 @@ export async function getUser(userId: string) {
             select: {
                 id: true,
                 name: true,
+                email: true,
                 role: true,
                 aiCredits: true,
                 quizzes: {
