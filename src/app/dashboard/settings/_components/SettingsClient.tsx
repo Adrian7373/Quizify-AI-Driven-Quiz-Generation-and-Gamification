@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { User, Shield, Bell, Sparkles, LogOut, Save } from "lucide-react";
+import { AppUser } from "@/app/page";
 
 type Tab = "account" | "preferences" | "security" | "credits";
 
 interface SettingsClientProps {
-    user: any; // Ideally typed to your Prisma User model
+    user: AppUser;
 }
 
 export default function SettingsClient({ user }: SettingsClientProps) {
@@ -16,11 +17,10 @@ export default function SettingsClient({ user }: SettingsClientProps) {
     // Form states for the Account tab
     const [name, setName] = useState(user.name || "");
 
-    const handleSave = async (e: React.FormEvent) => {
+    const handleAccountSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        // TODO: Call a Server Action here to update the user in Prisma
-        setTimeout(() => setIsSaving(false), 1000);
+
     };
 
     const tabs = [
@@ -43,8 +43,8 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as Tab)}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${isActive
-                                    ? "bg-white text-indigo-600 shadow-sm border border-slate-200"
-                                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                                ? "bg-white text-indigo-600 shadow-sm border border-slate-200"
+                                : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                                 }`}
                         >
                             <Icon className={`w-5 h-5 ${isActive ? "text-indigo-600" : "text-slate-400"}`} />
@@ -62,7 +62,7 @@ export default function SettingsClient({ user }: SettingsClientProps) {
                     <div className="animate-in fade-in duration-300">
                         <h2 className="text-2xl font-bold text-slate-800 mb-6">Account Profile</h2>
 
-                        <form onSubmit={handleSave} className="space-y-6 max-w-xl">
+                        <form onSubmit={handleAccountSave} className="space-y-6 max-w-xl">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2">Display Name</label>
                                 <input
