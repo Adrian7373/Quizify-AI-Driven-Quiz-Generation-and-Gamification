@@ -1,5 +1,5 @@
 "use client"
-import { CirclePoundSterling, CircleUserRound, Cog, CreditCard, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus } from "lucide-react";
+import { CirclePoundSterling, CircleUserRound, Cog, CreditCard, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus, Settings } from "lucide-react";
 import Logo from "./Logo";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -169,9 +169,16 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                                 </div>
                             </div>
                             {!!user && (
-                                <button onClick={toggleLogout} className="text-red-400 hover:bg-slate-800 p-2 rounded-full transition-colors">
-                                    <LogOut className="w-5 h-5" />
-                                </button>
+                                <div className="flex gap-1 items-center">
+                                    <Link
+                                        href={"/dashboard/settings"}
+                                    >
+                                        <Settings className="text-white w-5 h-5" />
+                                    </Link>
+                                    <button onClick={toggleLogout} className="text-red-400 hover:bg-slate-800 p-2 rounded-full transition-colors">
+                                        <LogOut className="w-5 h-5" />
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>
