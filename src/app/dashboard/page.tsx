@@ -114,7 +114,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col">
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center">
             <NavBar user={appUser} />
             <StreakWidget streak={appUser?.currentStreak ?? 0} />
             <RewardTracker userId={authUser.id} />
