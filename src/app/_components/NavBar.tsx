@@ -1,5 +1,5 @@
 "use client"
-import { CirclePoundSterling, CircleUserRound, Cog, CreditCard, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus, Settings } from "lucide-react";
+import { CirclePoundSterling, CircleUserRound, Cog, CreditCard, Flame, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus, Settings, Sparkles } from "lucide-react";
 import Logo from "./Logo";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -76,9 +76,24 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                 <Logo />
             </div>
             {user && (
-                <div className="flex items-center gap-1">
-                    <CirclePoundSterling fill="gold" className="text-gray-800" />
-                    <p className="text-white">{user?.aiCredits}</p>
+                <div className="flex items-center gap-4 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                    {/* Streak Indicator */}
+                    <div className="flex items-center gap-1 border-r border-slate-300 pr-3">
+                        <Flame
+                            className={`w-4 h-4 ${user.currentStreak > 0 ? "text-orange-500 fill-orange-500" : "text-slate-400"}`}
+                        />
+                        <span className={`text-sm font-bold ${user.currentStreak > 0 ? "text-orange-600" : "text-slate-500"}`}>
+                            {user.currentStreak}
+                        </span>
+                    </div>
+
+                    {/* AI Credits */}
+                    <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-[#4ce0a3] fill-[#4ce0a3]/20" />
+                        <span className="text-sm font-black text-slate-700">
+                            {user.aiCredits}
+                        </span>
+                    </div>
                 </div>
             )}
             <button onClick={toggleSignIn} hidden={!!user} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">Sign In</button>
