@@ -33,6 +33,7 @@ export type AppUser = {
   name: string | null;
   email: string;
   role: string;
+  currentStreak: number;
   aiCredits: number;
   quizzes: QuizInfo[]
 };
