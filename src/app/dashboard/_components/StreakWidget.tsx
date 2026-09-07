@@ -8,7 +8,7 @@ export default function StreakWidget({ streak }: { streak: number }) {
     const days = [1, 2, 3, 4, 5, 6, 7];
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-6 mb-8 pt-28 w-full max-w-3xl">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-8 mt-28 w-full max-w-3xl">
             <div className="flex justify-between items-end mb-4">
                 <div>
                     <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
