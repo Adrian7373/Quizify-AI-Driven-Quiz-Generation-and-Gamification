@@ -13,6 +13,7 @@ import GenerateNewButton from "./_components/GenerateNewButton";
 import CopyLinkButton from "./_components/CopyLinkButton";
 import QuizCard from "./_components/QuizCard";
 import RewardTracker from "./_components/RewardTracker";
+import StreakWidget from "./_components/StreakWidget";
 
 interface DashboardProps {
     searchParams: Promise<{ tab?: string }>;
@@ -115,10 +116,11 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             <NavBar user={appUser} />
+            <StreakWidget streak={appUser?.currentStreak ?? 0} />
             <RewardTracker userId={authUser.id} />
             <ActiveLiveWidget userId={authUser.id} />
 
-            <main className="flex-1 pt-28 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto w-full pb-12">
+            <main className="flex-1 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto w-full pb-12">
 
                 {/* Responsive Header: Stacks on mobile, side-by-side on sm+ */}
                 <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-5 mb-8">
