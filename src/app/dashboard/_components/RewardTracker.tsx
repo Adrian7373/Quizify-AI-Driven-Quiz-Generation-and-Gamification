@@ -6,7 +6,6 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 export default function RewardTracker({ userId }: { userId: string }) {
-    // Use a ref to ensure this strictly runs only once in React Strict Mode
     const hasRun = useRef(false);
     const router = useRouter();
 
@@ -18,12 +17,26 @@ export default function RewardTracker({ userId }: { userId: string }) {
             try {
                 const result = await processLoginRewards(userId);
 
-                // If the action added credits, show a celebratory toast
                 if (result?.success && result.creditsAdded > 0) {
-                    toast.success(
-                        `Daily Login! +${result.creditsAdded} Credits \nCurrent Streak: ${result.newStreak} days`,
-                        { duration: 4000, icon: '🔥' }
-                    );
+                    const { monthly, daily, streak } = result.breakdown;
+
+                    let toastMessage = "";
+
+                    if (monthly > 0) {
+                        toastMessage += `Monthly Refill: +${monthly}\n`;
+                    }
+                    if (streak > 0) {
+                        toastMessage += `🔥 Weekly Bonus: +${streak}\n`;
+                    }
+                    if (daily > 0) {
+                        toastMessage += `Daily Login: +${daily}\n`;
+                    }
+
+                    // Show the toast with a dynamic icon based on the best reward
+                    toast.success(toastMessage.trim(), {
+                        duration: 10000000,
+                    });
+
                     router.refresh();
                 }
             } catch (error) {
@@ -32,7 +45,7 @@ export default function RewardTracker({ userId }: { userId: string }) {
         };
 
         fetchRewards();
-    }, [userId]);
+    }, [userId, router]);
 
     return null;
 }
