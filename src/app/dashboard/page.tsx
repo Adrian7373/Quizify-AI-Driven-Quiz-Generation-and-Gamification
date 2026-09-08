@@ -14,16 +14,21 @@ import CopyLinkButton from "./_components/CopyLinkButton";
 import QuizCard from "./_components/QuizCard";
 import RewardTracker from "./_components/RewardTracker";
 import StreakWidget from "./_components/StreakWidget";
+import Pagination from "./_components/Pagination";
 
 interface DashboardProps {
-    searchParams: Promise<{ tab?: string }>;
+    searchParams: Promise<{ tab?: string, page?: string }>;
 }
 
 type UserRole = "TEACHER" | "STUDENT";
+const ITEMS_PER_PAGE = 9;
 
 export default async function DashboardPage({ searchParams }: DashboardProps) {
-    const { tab } = await searchParams;
+    const { tab, page } = await searchParams;
     const currentTab = tab || "quizzes";
+
+    const currentPage = Number(page) || 1;
+    const skip = (currentPage - 1) * ITEMS_PER_PAGE;
 
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -58,59 +63,87 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
     let quizzes: any[] = [];
     let activeSessions: any[] = [];
     let completedSessions: any[] = [];
+    let totalPages = 1;
 
     if (currentTab === "quizzes") {
-        quizzes = await prisma.quiz.findMany({
-            where: { creatorId: authUser.id, isDeleted: false },
-            orderBy: { createdAt: 'desc' },
-            select: {
-                id: true,
-                title: true,
-                description: true,
-                difficulty: true,
-                createdAt: true,
-                _count: { select: { questions: true, sessions: true } }
-            }
-        });
+        const whereClause = { creatorId: authUser.id, isDeleted: false }
+        const [fetchedQuizzes, totalCount] = await prisma.$transaction([
+            prisma.quiz.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                skip: skip,
+                take: ITEMS_PER_PAGE,
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    difficulty: true,
+                    createdAt: true,
+                    _count: { select: { questions: true, sessions: true } }
+                }
+            }),
+            prisma.quiz.count({ where: whereClause })
+        ]);
+        quizzes = fetchedQuizzes;
+        totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
     } else if (currentTab === "assignments") {
-        activeSessions = await prisma.gameSession.findMany({
-            where: {
-                hostId: authUser.id,
-                status: "IN_PROGRESS",
-                mode: "ASYNC",
-                NOT: { joinCode: { startsWith: "PRAC-" } },
-                OR: [
-                    { expiresAt: null },
-                    { expiresAt: { gt: new Date() } }
-                ]
-            },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                quiz: { select: { title: true } },
-                _count: { select: { participants: true } }
-            }
-        });
+
+        const whereClause = {
+            hostId: authUser.id,
+            status: "IN_PROGRESS" as const,
+            mode: "ASYNC" as const,
+            NOT: { joinCode: { startsWith: "PRAC-" } },
+            OR: [
+                { expiresAt: null },
+                { expiresAt: { gt: new Date() } }
+            ]
+        }
+
+        const [fetchedSessions, totalCount] = await prisma.$transaction([
+            prisma.gameSession.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    quiz: { select: { title: true } },
+                    _count: { select: { participants: true } }
+                }
+            }),
+            prisma.gameSession.count({ where: whereClause })
+        ]);
+
+        activeSessions = fetchedSessions
+        totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
     } else if (currentTab === "reports") {
-        // 2. Fetch FINISHED sessions
-        completedSessions = await prisma.gameSession.findMany({
-            where: {
-                hostId: authUser.id,
-                NOT: { joinCode: { startsWith: "PRAC-" } },
-                OR: [
-                    { status: "FINISHED" },
-                    {
-                        status: "IN_PROGRESS",
-                        mode: "ASYNC",
-                        expiresAt: { lte: new Date() } // Deadline is in the past
-                    }
-                ]
-            },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                quiz: { select: { title: true } },
-                _count: { select: { participants: true } }
-            }
-        });
+
+        const whereClause = {
+            hostId: authUser.id,
+            NOT: { joinCode: { startsWith: "PRAC-" } },
+            OR: [
+                { status: "FINISHED" as const },
+                {
+                    status: "IN_PROGRESS" as const,
+                    mode: "ASYNC" as const,
+                    expiresAt: { lte: new Date() } // Deadline is in the past
+                }
+            ]
+        }
+
+        const [fetchedReports, totalCount] = await prisma.$transaction([
+            prisma.gameSession.findMany({
+                where: whereClause,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    quiz: { select: { title: true } },
+                    _count: { select: { participants: true } }
+                }
+            }),
+            prisma.gameSession.count({ where: whereClause })
+        ]);
+
+        completedSessions = fetchedReports;
+        totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE)
+
     }
 
     return (
@@ -177,16 +210,19 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                            {quizzes.map((quiz) => (
-                                <QuizCard
-                                    key={quiz.id}
-                                    quiz={quiz}
-                                    userId={authUser.id}
-                                    userRole={userRole}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                                {quizzes.map((quiz) => (
+                                    <QuizCard
+                                        key={quiz.id}
+                                        quiz={quiz}
+                                        userId={authUser.id}
+                                        userRole={userRole}
+                                    />
+                                ))}
+                            </div>
+                            <Pagination currentPage={currentPage} totalPages={totalPages} tab={currentTab} />
+                        </>
                     )
                 )}
 
