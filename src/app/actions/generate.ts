@@ -383,7 +383,7 @@ export async function generateClassInsight(sessionId: string) {
         }
 
         // 4. Send to your Python Flask/Django Microservice
-        const pythonApiUrl = baseUrl;
+        const pythonApiUrl = `${baseUrl}/api/insights`;
 
         const aiResponse = await fetch(pythonApiUrl, {
             method: 'POST',
