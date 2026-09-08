@@ -5,8 +5,14 @@ import NavBar from "@/app/_components/NavBar";
 import SettingsClient from "./_components/SettingsClient";
 import { getUser } from "@/app/actions";
 import { AppUser } from "@/app/page";
+import { Tab } from "./_components/SettingsClient";
 
-export default async function SettingsPage() {
+interface SettingsPageProps {
+    searchParams: Promise<{ tab: Tab }>
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+    const resolvedTab = (await searchParams).tab || "account";
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
@@ -32,7 +38,7 @@ export default async function SettingsPage() {
                     <p className="text-slate-500 mt-1">Manage your account preferences and configurations.</p>
                 </div>
 
-                <SettingsClient user={appUser} />
+                <SettingsClient user={appUser} initialTab={resolvedTab} />
             </main>
         </div>
     );
