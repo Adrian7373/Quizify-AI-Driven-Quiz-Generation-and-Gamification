@@ -15,7 +15,7 @@ export default function RewardTracker({ userId }: { userId: string }) {
         const end = Date.now() + duration;
 
         // Use your app's brand colors (Green and Orange)
-        const colors = ['#4ce0a3', '#f97316'];
+        const colors = ['#3bc48b', '#f97316'];
 
         (function frame() {
             confetti({
