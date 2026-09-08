@@ -4,10 +4,40 @@ import { useEffect, useRef } from "react";
 import { processLoginRewards } from "../actions";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import confetti from "canvas-confetti"
 
 export default function RewardTracker({ userId }: { userId: string }) {
     const hasRun = useRef(false);
     const router = useRouter();
+
+    const triggerConfetti = () => {
+        const duration = 2000;
+        const end = Date.now() + duration;
+
+        // Use your app's brand colors (Green and Orange)
+        const colors = ['#4ce0a3', '#f97316'];
+
+        (function frame() {
+            confetti({
+                particleCount: 5,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors
+            });
+            confetti({
+                particleCount: 5,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    };
 
     useEffect(() => {
         if (hasRun.current) return;
@@ -34,8 +64,12 @@ export default function RewardTracker({ userId }: { userId: string }) {
 
                     // Show the toast with a dynamic icon based on the best reward
                     toast.success(toastMessage.trim(), {
-                        duration: 10000000,
+                        duration: 3000,
                     });
+
+                    if (streak > 0) {
+                        triggerConfetti();
+                    }
 
                     router.refresh();
                 }
