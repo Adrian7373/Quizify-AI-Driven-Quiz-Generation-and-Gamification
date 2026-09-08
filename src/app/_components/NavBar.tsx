@@ -90,9 +90,9 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                     {/* AI Credits */}
                     <div className="flex items-center gap-1.5">
                         <Sparkles className="w-4 h-4 text-[#4ce0a3] fill-[#4ce0a3]/20" />
-                        <span className="text-sm font-black text-slate-700">
+                        <Link href={`/dashboard/settings?tab=credits`} className="text-sm font-black text-slate-700">
                             {user.aiCredits}
-                        </span>
+                        </Link>
                     </div>
                 </div>
             )}
