@@ -1,5 +1,6 @@
 "use client"
-import { Flame, Check, Gift } from "lucide-react";
+import { Flame, Check, Gift, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 export default function StreakWidget({ streak }: { streak: number }) {
     // Calculate progress towards the 7-day bonus
@@ -7,9 +8,13 @@ export default function StreakWidget({ streak }: { streak: number }) {
     const progressInWeek = streak === 0 ? 0 : ((streak - 1) % 7) + 1;
     const days = [1, 2, 3, 4, 5, 6, 7];
 
+    const [isVisible, setIsVisible] = useState(true);
+
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-8 mt-28 w-full max-w-3xl">
-            <div className="flex justify-between items-end mb-4">
+        <div className="relative bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-8 mt-28 w-full max-w-3xl">
+            <ChevronDown onClick={() => setIsVisible(true)} className={`absolute right-6 top-8 ${isVisible && "hidden"}`} />
+            <ChevronUp onClick={() => setIsVisible(false)} className={`absolute right-6 top-8 ${!isVisible && "hidden"}`} />
+            <div className="flex justify-between items-end">
                 <div>
                     <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
                         <Flame className="w-5 h-5 text-orange-500 fill-orange-500" />
@@ -22,7 +27,7 @@ export default function StreakWidget({ streak }: { streak: number }) {
             </div>
 
             {/* The Visual Journey */}
-            <div className="flex justify-between items-center relative z-10">
+            <div hidden={!isVisible} className="flex justify-between items-center relative z-10 mt-4">
                 {/* Background Track Line */}
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1.5 bg-slate-100 rounded-full -z-10"></div>
 
