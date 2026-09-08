@@ -7,15 +7,16 @@ import { updateAccountProfile } from "../actions";
 import toast from "react-hot-toast";
 import { error } from "node:console";
 
-type Tab = "account" | "preferences" | "security" | "credits";
+export type Tab = "account" | "preferences" | "security" | "credits";
 type Role = "TEACHER" | "STUDENT";
 
 interface SettingsClientProps {
     user: AppUser;
+    initialTab: Tab;
 }
 
-export default function SettingsClient({ user }: SettingsClientProps) {
-    const [activeTab, setActiveTab] = useState<Tab>("account");
+export default function SettingsClient({ user, initialTab }: SettingsClientProps) {
+    const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "account");
     const [isSaving, setIsSaving] = useState(false);
 
     // Form states for the Account tab
