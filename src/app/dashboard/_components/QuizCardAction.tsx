@@ -123,14 +123,14 @@ export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOpt
                     <>
                         <Link
                             href={`/study/${quizId}`}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs sm:text-sm font-bold transition-colors"
+                            className="flex-1 flex items-center border justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
                         >
                             <BookOpen className="w-4 h-4" /> Flashcards
                         </Link>
                         <button
                             onClick={(e) => { e.preventDefault(); handlePracticeLaunch(); }}
                             disabled={isStartingPractice}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors disabled:opacity-70"
+                            className="cursor-pointer flex-1 border flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors disabled:opacity-70 border-indigo-200"
                         >
                             {isStartingPractice ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -142,10 +142,10 @@ export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOpt
                     </>
                 ) : (
                     <>
-                        <button onClick={() => setIsAssigning(true)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg text-xs sm:text-sm font-bold transition-colors">
+                        <button onClick={() => setIsAssigning(true)} className="flex-1 flex items-center border justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100">
                             <CalendarClock className="w-4 h-4" /> Assign
                         </button>
-                        <button onClick={() => setIsLaunchingLive(true)} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors">
+                        <button onClick={() => setIsLaunchingLive(true)} className="cursor-pointer flex-1 border flex items-center justify-center gap-1.5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs sm:text-sm font-bold transition-colors disabled:opacity-70 border-indigo-200">
                             <Play className="w-4 h-4" fill="currentColor" /> Live
                         </button>
                     </>
@@ -154,7 +154,7 @@ export default function QuizCardActions({ quizId, userId, quizTitle, onDeleteOpt
                 {/* Delete button */}
                 <button
                     onClick={(e) => { e.preventDefault(); setIsDeleting(true); }}
-                    className="flex items-center justify-center p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg transition-colors shrink-0"
+                    className="cursor-pointer flex items-center border border-rose-200 justify-center p-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg transition-colors shrink-0"
                     title="Delete Quiz"
                 >
                     <Trash className="w-4 h-4" />

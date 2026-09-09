@@ -15,7 +15,8 @@ export default function GenerateNewButton({ userId }: GenerateNewButtonProps) {
         <>
             <button
                 onClick={() => setIsModalOpen(true)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900 font-bold text-sm sm:text-base px-3 sm:px-5 py-2.5 rounded-xl transition-colors shrink-0"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 bg-[#4ce0a3] hover:bg-[#3bc48b] text-slate-900
+                 font-bold text-sm sm:text-base px-3 sm:px-5 py-2.5 rounded-xl transition-colors shrink-0 hover:scale-105 transition-all duration-300 cursor-pointer"
             >
                 <BrainCircuit className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                 <span className="whitespace-nowrap">Generate New</span>
