@@ -175,7 +175,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         setIsExiting(true);
         await cleanupPracticeSession(sessionId);
         localStorage.removeItem(`participant_${sessionId}`);
-        router.push("/dashboard");
+        window.location.href = "/dashboard"
     };
 
     if (!participantId || isLoadingProgress) {
@@ -206,7 +206,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                         className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition disabled:opacity-70"
                     >
                         {isExiting ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogOut className="w-5 h-5" />}
-                        {isExiting ? "Cleaning up..." : "Exit to Dashboard"}
+                        {isExiting ? "Cleaning up..." : "Exit7 to Dashboard"}
                     </button>
                 </div>
             </div>
@@ -269,7 +269,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                             onChange={(e) => setTextAnswer(e.target.value)}
                             disabled={isRevealed}
                             placeholder="Type your essay answer here..."
-                            className="w-full p-4 rounded-xl border-2 border-slate-200 text-slate-800 focus:border-[#4ce0a3] focus:outline-none resize-none h-[120px] md:h-[150px] transition-colors disabled:bg-slate-100 disabled:text-slate-500 text-sm md:text-base"
+                            className="w-full p-4 rounded-xl border-2 border-slate-200 text-white focus:border-[#4ce0a3] focus:outline-none resize-none h-[120px] md:h-[150px] transition-colors disabled:bg-slate-100 disabled:text-slate-500 text-sm md:text-base"
                         />
                     ) : (
                         <input
@@ -279,7 +279,7 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                             onKeyDown={(e) => e.key === 'Enter' && textAnswer.trim() && handleAnswerSubmit(textAnswer)}
                             disabled={isRevealed}
                             placeholder="Type your answer here..."
-                            className="w-full p-4 md:p-5 rounded-xl border-2 border-slate-200 text-slate-800 focus:border-[#4ce0a3] focus:outline-none text-center font-bold text-base md:text-lg transition-colors disabled:bg-slate-100 disabled:text-slate-500"
+                            className="w-full p-4 md:p-5 rounded-xl border-2 border-slate-200 text-white focus:border-[#4ce0a3] focus:outline-none text-center font-bold text-base md:text-lg transition-colors disabled:bg-slate-100 disabled:text-slate-500"
                         />
                     )}
 
