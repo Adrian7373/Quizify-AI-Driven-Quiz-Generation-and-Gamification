@@ -35,7 +35,7 @@ export default function DeleteSessionButton({ sessionId, hostId }: DeleteSession
             <button
                 onClick={() => setIsShowing(true)}
                 disabled={isDeleting}
-                className="p-3 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
+                className="p-3 cursor-pointer bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
                 title="Delete Session"
             >
                 {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}

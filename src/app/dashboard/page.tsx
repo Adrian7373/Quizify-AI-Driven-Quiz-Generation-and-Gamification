@@ -239,7 +239,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                     ) : (
                         <div className="flex flex-col gap-4">
                             {activeSessions.map((session) => (
-                                <div key={session.id} className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-amber-300 transition-colors">
+                                <div key={session.id} className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
                                     <div className="flex flex-col xsm:flex-row items-start xsm:items-center gap-4 sm:gap-5 w-full">
                                         {/* PIN Display - Updated with Copy Button */}

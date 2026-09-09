@@ -192,9 +192,9 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                                     key={option}
                                     onClick={() => setSelectedOption(option)}
                                     disabled={isGenerating}
-                                    className={`flex-1 py-2.5 px-4 text-sm font-bold rounded-lg transition-all ${isActive
+                                    className={`cursor-pointer flex-1 py-2.5 px-4 text-sm font-bold rounded-lg transition-all ${isActive
                                         ? 'bg-slate-900 text-white shadow-md'
-                                        : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                                        : 'bg-transparent text-slate-500 hover:bg-slate-200 hover:text-slate-700'
                                         }`}
                                 >
                                     {option}
@@ -241,7 +241,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                                 <select
                                     value={questionCount}
                                     onChange={(e) => setQuestionCount(e.target.value)}
-                                    className="focus:outline-none focus:border-[#4ce0a3] border-2 border-slate-200 px-4 py-2.5 rounded-lg bg-slate-50 transition-colors"
+                                    className="cursor-pointer focus:outline-none focus:border-[#4ce0a3] border-2 border-slate-200 px-4 py-2.5 rounded-lg bg-slate-50 transition-colors"
                                 >
                                     {[5, 10, 15, 20, 25, 30, 35, 40].map(num => (
                                         <option key={num} value={num}>{num}</option>
@@ -255,7 +255,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                                 <select
                                     value={difficulty}
                                     onChange={(e) => setDifficulty(e.target.value as DifficultyType)}
-                                    className="focus:outline-none focus:border-[#4ce0a3] border-2 border-slate-200 px-4 py-2.5 rounded-lg bg-slate-50 transition-colors capitalize"
+                                    className="cursor-pointer focus:outline-none focus:border-[#4ce0a3] border-2 border-slate-200 px-4 py-2.5 rounded-lg bg-slate-50 transition-colors capitalize"
                                 >
                                     <option value="easy">Easy</option>
                                     <option value="normal">Normal</option>
@@ -269,7 +269,7 @@ export default function GenerateQuizModal({ onClose, userId }: GenerateQuizModal
                                 <select
                                     value={language}
                                     onChange={(e) => setLanguage(e.target.value)}
-                                    className="focus:outline-none focus:border-[#4ce0a3] border-2 border-slate-200 px-4 py-2.5 rounded-lg bg-slate-50 transition-colors"
+                                    className="cursor-pointer focus:outline-none focus:border-[#4ce0a3] border-2 border-slate-200 px-4 py-2.5 rounded-lg bg-slate-50 transition-colors"
                                 >
                                     <option value="English">English</option>
                                     <option value="Filipino">Filipino</option>

@@ -37,7 +37,7 @@ export default function EndSessionButton({ sessionId, hostId }: EndSessionButton
             <button
                 onClick={() => setIsShowing(true)}
                 disabled={isEnding}
-                className="flex-1 sm:flex-none bg-rose-100 hover:bg-rose-200 text-rose-700 disabled:opacity-50 font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="flex-1 cursor-pointer sm:flex-none bg-rose-100 hover:bg-rose-200 text-rose-700 disabled:opacity-50 font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
                 {isEnding ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
