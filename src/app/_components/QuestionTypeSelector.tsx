@@ -1,4 +1,5 @@
 "use client"
+import { usePathname } from "next/navigation";
 import { QuizType } from "../page";
 
 interface QuestionTypeSelector {
@@ -16,10 +17,12 @@ const TYPE_LABELS: Record<QuizType, string> = {
 
 export default function QuizTypeSelector({ quizType, handleTypeChange }: QuestionTypeSelector) {
     const options: QuizType[] = ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'IDENTIFICATION', 'ESSAY'];
+    const pathName = usePathname();
+    const onHome = pathName == "/";
 
     return (
         <div className="w-full flex flex-col gap-2 font-inter shrink-0">
-            <label className="text-sm font-bold text-white uppercase tracking-wider">
+            <label className={`text-sm font-bold ${onHome ? "text-white" : "text-slate-600"} uppercase tracking-wider`}>
                 Question Type
             </label>
 
@@ -37,7 +40,7 @@ export default function QuizTypeSelector({ quizType, handleTypeChange }: Questio
                                 py-2.5 px-2 text-xs sm:text-sm font-bold rounded-lg transition-all text-center flex items-center justify-center
                                 ${isActive
                                     ? 'bg-[#4ce0a3] text-slate-900 shadow-md'
-                                    : 'bg-transparent text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                                    : 'bg-transparent text-slate-500 cursor-pointer hover:bg-slate-200 hover:text-slate-700'
                                 }
                             `}
                         >
