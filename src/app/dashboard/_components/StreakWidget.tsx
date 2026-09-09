@@ -12,8 +12,8 @@ export default function StreakWidget({ streak }: { streak: number }) {
 
     return (
         <div className="relative bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-8 mt-28 w-full max-w-3xl">
-            <ChevronDown onClick={() => setIsVisible(true)} className={`absolute right-6 top-8 ${isVisible && "hidden"}`} />
-            <ChevronUp onClick={() => setIsVisible(false)} className={`absolute right-6 top-8 ${!isVisible && "hidden"}`} />
+            <ChevronDown onClick={() => setIsVisible(true)} className={`absolute right-6 top-8 cursor-pointer hover:bg-slate-200 rounded-full transition-colors duration-300 ${isVisible && "hidden"}`} />
+            <ChevronUp onClick={() => setIsVisible(false)} className={`absolute right-6 top-8 cursor-pointer hover:bg-slate-200 rounded-full transition-colors  duration-300 ${!isVisible && "hidden"}`} />
             <div className="flex justify-between items-end">
                 <div>
                     <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">

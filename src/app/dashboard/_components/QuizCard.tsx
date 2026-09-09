@@ -18,12 +18,12 @@ export default function QuizCard({ quiz, userId, userRole }: QuizCardProps) {
 
     return (
         <div
-            className={`group bg-white border border-slate-200 rounded-xl hover:shadow-md hover:border-[#4ce0a3] transition-all duration-300 flex-col overflow-hidden ${isOptimisticallyDeleted ? 'hidden' : 'flex'}`}
+            className={`group bg-white border border-slate-200 rounded-xl hover:scale-105 hover:shadow-md transition-all duration-300 flex-col overflow-hidden ${isOptimisticallyDeleted ? 'hidden' : 'flex'}`}
         >
             {/* Link covers the top info part */}
             <Link href={`/quiz/${quiz.id}`} className="p-5 sm:p-6 flex flex-col flex-1 cursor-pointer">
                 <div className="flex justify-between items-start mb-4 gap-3">
-                    <h3 className="text-base sm:text-lg font-bold text-slate-800 line-clamp-2 group-hover:text-[#4ce0a3] transition-colors">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-800 line-clamp-2 transition-colors">
                         {quiz.title}
                     </h3>
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-full shrink-0 ${quiz.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-700' :
