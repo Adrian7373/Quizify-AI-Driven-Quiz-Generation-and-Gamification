@@ -1,10 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { redirect } from "next/navigation";
+import QuestionBankControls from "./_components/QuestionBankControls";
 import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
-import QuestionBankClient from "./_components/QuestionBankClient";
+import QuestionBankGrid from "./_components/QuestionBankGrid";
 import { Suspense } from "react";
+import { ArrowLeft, Link } from "lucide-react";
 
 interface QuestionBankPageProps {
     searchParams: Promise<{ page?: string; search?: string; type?: string; }>;
@@ -62,14 +63,13 @@ async function BankData({ currentPage, page, search, type, userId }: { currentPa
     const totalPages = Math.ceil(totalQuestionsCount / PAGE_SIZE);
 
     return (
-        <QuestionBankClient
+        <QuestionBankGrid
             questions={paginatedQuestions}
             userId={userId}
             currentPage={currentPage}
             totalPages={totalPages}
             totalCount={totalQuestionsCount}
             initialSearch={searchTerm}
-            initialType={questionType}
         />
     )
 }
@@ -93,11 +93,40 @@ export default async function QuestionBankPage({ searchParams }: QuestionBankPag
         <div className="min-h-screen bg-slate-50 flex flex-col font-inter">
             <NavBar user={appUser} />
             <main className="flex-1 pt-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto w-full pb-32">
+
+                <div className="mb-8">
+                    <Link href="/dashboard" className="...">
+                        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+                    </Link>
+
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-4">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900">Question Bank</h1>
+                            <p className="text-slate-500 mt-1">Mix and match your past questions to create a new quiz.</p>
+                        </div>
+
+                        {/* Interactive Client Component */}
+                        <QuestionBankControls
+                            initialSearch={search ?? ""}
+                            initialType={type ?? "ALL"}
+                        />
+                    </div>
+                </div>
+
+                {/* Everything in here gets destroyed and rebuilt */}
                 <Suspense
-                    key={`${currentPage}-${type}-${search}`} fallback={<BankSkeleton />}
+                    key={`${currentPage}-${type}-${search}`}
+                    fallback={<BankSkeleton />}
                 >
-                    <BankData currentPage={currentPage} page={page ?? "1"} search={search ?? ""} userId={authUser.id} type={type ?? "ALL"} />
+                    <BankData
+                        currentPage={currentPage}
+                        page={page ?? "1"}
+                        search={search ?? ""}
+                        userId={authUser.id}
+                        type={type ?? "ALL"}
+                    />
                 </Suspense>
+
             </main>
         </div>
     );
