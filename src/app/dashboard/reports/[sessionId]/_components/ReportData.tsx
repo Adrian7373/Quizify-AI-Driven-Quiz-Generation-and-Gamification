@@ -13,7 +13,6 @@ interface ReportDataProps {
 export default async function ReportData({ sessionId, userId }: ReportDataProps) {
 
 
-    // 2. Fetch the Session, Quiz Info, and all Participants (Ordered by Score)
     const session = await prisma.gameSession.findUnique({
         where: {
             id: sessionId,
@@ -27,7 +26,7 @@ export default async function ReportData({ sessionId, userId }: ReportDataProps)
                 }
             },
             participants: {
-                orderBy: { totalScore: 'desc' }, // The Leaderboard logic!
+                orderBy: { totalScore: 'desc' }, // The Leaderboard logic
                 include: {
                     responses: {
                         select: { isCorrect: true, questionId: true } // We need this to calculate accuracy
@@ -44,7 +43,6 @@ export default async function ReportData({ sessionId, userId }: ReportDataProps)
         redirect("/dashboard");
     }
 
-    // 3. Calculate Class Statistics
     const totalParticipants = session.participants.length;
 
     const averageScore = totalParticipants > 0
@@ -75,7 +73,7 @@ export default async function ReportData({ sessionId, userId }: ReportDataProps)
                 </div>
             </div>
 
-            {/* 2. ADDED AI INSIGHTS CARD */}
+            {/* AI INSIGHTS CARD */}
             <AiInsightsCard
                 sessionId={session.id}
                 initialInsight={session.classInsight}

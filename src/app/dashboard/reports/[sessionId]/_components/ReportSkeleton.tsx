@@ -1,7 +1,7 @@
 import { ArrowLeft, Trophy, Users, Target, Flame } from "lucide-react";
 
 export default function ReportSkeleton() {
-    const tableRows = Array(5).fill(null); // Generates 5 dummy rows
+    const tableRows = Array(5).fill(null); // 5 dummy rows
 
     return (
         <div className="animate-pulse w-full">
