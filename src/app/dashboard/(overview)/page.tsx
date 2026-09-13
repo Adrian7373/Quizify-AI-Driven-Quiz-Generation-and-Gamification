@@ -1,21 +1,20 @@
 import { Suspense } from "react";
 import { createClient } from "@/utils/supabase/server";
 import prisma from "@/lib/prisma";
-import { redirect } from "next/navigation";
 import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
 import Link from "next/link";
 import { Calendar, CheckCircle2, Clock, FileQuestion, Layers, PlayCircle, Trophy, Users, Loader2 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import EndSessionButton from "./_components/EndSessionButton";
-import ActiveLiveWidget from "../_components/ActiveLiveWidget";
-import DeleteSessionButton from "./_components/DeleteSessionButton";
-import GenerateNewButton from "./_components/GenerateNewButton";
-import CopyLinkButton from "./_components/CopyLinkButton";
-import QuizCard from "./_components/QuizCard";
-import RewardTracker from "./_components/RewardTracker";
-import StreakWidget from "./_components/StreakWidget";
-import Pagination from "./_components/Pagination";
+import EndSessionButton from "../_components/EndSessionButton";
+import ActiveLiveWidget from "../../_components/ActiveLiveWidget";
+import DeleteSessionButton from "../_components/DeleteSessionButton";
+import GenerateNewButton from "../_components/GenerateNewButton";
+import CopyLinkButton from "../_components/CopyLinkButton";
+import QuizCard from "../_components/QuizCard";
+import RewardTracker from "../_components/RewardTracker";
+import StreakWidget from "../_components/StreakWidget";
+import Pagination from "../_components/Pagination";
 
 interface DashboardProps {
     searchParams: Promise<{ tab?: string, page?: string }>;
