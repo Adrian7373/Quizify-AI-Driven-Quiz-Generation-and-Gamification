@@ -5,7 +5,8 @@ import NavBar from "@/app/_components/NavBar";
 import { getUser } from "@/app/actions";
 import QuestionBankGrid from "./_components/QuestionBankGrid";
 import { Suspense } from "react";
-import { ArrowLeft, Link } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface QuestionBankPageProps {
     searchParams: Promise<{ page?: string; search?: string; type?: string; }>;
@@ -95,8 +96,8 @@ export default async function QuestionBankPage({ searchParams }: QuestionBankPag
             <main className="flex-1 pt-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto w-full pb-32">
 
                 <div className="mb-8">
-                    <Link href="/dashboard" className="...">
-                        <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+                    <Link href="/dashboard" className="inline-flex items-center gap-2 text-slate-500 hover:text-[#4ce0a3] transition-colors font-semibold text-sm mb-4">
+                        <ArrowLeft className="w-4 h-4 text-black" /> Back to Dashboard
                     </Link>
 
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-4">
