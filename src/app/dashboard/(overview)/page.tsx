@@ -411,8 +411,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                     </Link>
                 </div>
 
-                {/* 🚨 THE SUSPENSE BOUNDARY 🚨 */}
-                <Suspense key={currentTab} fallback={getTabSkeleton(currentTab)}>
+                <Suspense key={`${currentTab}-${currentPage}`} fallback={getTabSkeleton(currentTab)}>
                     <TabContent
                         currentTab={currentTab}
                         authUser={authUser}
