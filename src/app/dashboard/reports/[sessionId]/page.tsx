@@ -21,7 +21,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
-    if (!authUser) redirect("/");
+    if (!authUser) throw new Error("Please log in first.");
 
     let appUser = null;
     const userResponse = await getUser(authUser.id);

@@ -17,7 +17,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
     if (!authUser) {
-        redirect("/");
+        throw new Error("Please log in first.");
     }
 
     // Fetch full user details from Prisma
@@ -25,7 +25,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     const appUser = userResponse.user as unknown as AppUser;
 
     if (!appUser) {
-        redirect("/");
+        redirect("/login");
     }
 
     return (
