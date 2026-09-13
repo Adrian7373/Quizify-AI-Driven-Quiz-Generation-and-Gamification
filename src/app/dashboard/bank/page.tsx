@@ -15,9 +15,53 @@ interface QuestionBankPageProps {
 // SKELETON
 
 function BankSkeleton() {
+    // Generate an array of 6 items to fill a 2-column grid nicely
+    const skeletonItems = Array(6).fill(null);
+
     return (
-        <div></div>
-    )
+        <div className="relative animate-pulse w-full">
+            {/* List Controls Placeholder (Showing X of Y) */}
+            <div className="flex justify-between items-center mb-4 px-2">
+                <div className="h-4 w-48 bg-slate-200 rounded"></div>
+                <div className="h-4 w-32 bg-slate-200 rounded"></div>
+            </div>
+
+            {/* Questions Grid Placeholder */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {skeletonItems.map((_, index) => (
+                    <div
+                        key={index}
+                        className="p-5 rounded-xl border-2 border-slate-200 bg-white flex gap-4"
+                    >
+                        {/* Checkbox Placeholder */}
+                        <div className="shrink-0 mt-1">
+                            <div className="w-6 h-6 bg-slate-200 rounded flex-shrink-0"></div>
+                        </div>
+
+                        {/* Content Placeholder */}
+                        <div className="min-w-0 flex-1">
+                            {/* Quiz Title Line */}
+                            <div className="h-3 w-32 bg-slate-200 rounded mb-3"></div>
+
+                            {/* Question Text (Simulating 2 lines) */}
+                            <div className="h-5 w-3/4 bg-slate-300 rounded mb-2"></div>
+                            <div className="h-5 w-1/2 bg-slate-300 rounded mb-4"></div>
+
+                            {/* Answer Block */}
+                            <div className="h-11 w-full bg-slate-200 rounded-lg border border-slate-100"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Pagination Controls Placeholder */}
+            <div className="flex items-center justify-center gap-4 mt-8">
+                <div className="w-10 h-10 rounded-lg bg-slate-200"></div>
+                <div className="h-4 w-24 bg-slate-200 rounded"></div>
+                <div className="w-10 h-10 rounded-lg bg-slate-200"></div>
+            </div>
+        </div>
+    );
 }
 
 
