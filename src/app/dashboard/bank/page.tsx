@@ -7,6 +7,7 @@ import QuestionBankGrid from "./_components/QuestionBankGrid";
 import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import BankLoading from "./loading";
 
 interface QuestionBankPageProps {
     searchParams: Promise<{ page?: string; search?: string; type?: string; }>;
@@ -133,6 +134,7 @@ export default async function QuestionBankPage({ searchParams }: QuestionBankPag
     let appUser = null;
     const userResponse = await getUser(authUser.id);
     if (userResponse.user) appUser = userResponse.user;
+
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-inter">
