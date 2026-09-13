@@ -26,14 +26,23 @@ export async function proxy(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
+    // Protect the dashboard routes
     if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
-        return NextResponse.redirect(url)
+        const redirectResponse = NextResponse.redirect(url)
+
+        // Preserve any newly refreshed session cookies during the redirect
+        for (const cookie of supabaseResponse.cookies.getAll()) {
+            redirectResponse.cookies.set(cookie)
+        }
+
+        return redirectResponse
     }
 
     return supabaseResponse
 }
+
 export const config = {
     matcher: [
         '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
