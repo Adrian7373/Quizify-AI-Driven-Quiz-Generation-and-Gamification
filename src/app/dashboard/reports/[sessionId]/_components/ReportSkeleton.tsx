@@ -7,9 +7,6 @@ export default function ReportSkeleton() {
         <div className="animate-pulse w-full">
             {/* Header Section */}
             <div className="mb-8">
-                <div className="inline-flex items-center gap-2 text-slate-300 font-semibold text-sm mb-4">
-                    <ArrowLeft className="w-4 h-4" /> Back to Dashboard
-                </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="flex gap-5 w-full md:w-auto">
                         <div className="w-full">
@@ -22,7 +19,7 @@ export default function ReportSkeleton() {
                         <div className="hidden md:block h-12 w-36 bg-slate-200 rounded-xl shrink-0"></div>
                     </div>
                     {/* Game PIN Box */}
-                    <div className="h-[72px] w-28 bg-white border border-slate-200 rounded-lg shrink-0"></div>
+                    <div className="h-[72px] w-full md:w-28 bg-white border border-slate-200 rounded-lg shrink-0"></div>
                 </div>
             </div>
 

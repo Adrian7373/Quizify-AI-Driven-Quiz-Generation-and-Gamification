@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import ReportData from "./_components/ReportData";
 import { Suspense } from "react";
 import ReportSkeleton from "./_components/ReportSkeleton";
+import { resolve } from "node:dns";
 
 interface ReportPageProps {
     params: Promise<{ sessionId: string }>;

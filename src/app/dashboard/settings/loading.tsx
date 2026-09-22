@@ -8,7 +8,7 @@ export default function SettingsLoading() {
             <div className="w-full py-6 px-5 bg-darker">
                 {/* Top Bar */}
                 <div className="flex gap-2 items-center justify-between">
-                    <div className="w-20 h-9 bg-slate-300 animate-pulse rounded-md"></div>
+                    <div className="w-20 h-8 bg-slate-300 animate-pulse rounded-md"></div>
                     <div className="w-18 h-7 bg-slate-300 animate-pulse rounded-md"></div>
                 </div>
             </div>
