@@ -118,6 +118,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
             setIsGenerating(false);
           } else {
             alert("Failed to generate quiz. Server error")
+            setIsGenerating(false);
           }
 
         } else {
@@ -139,8 +140,10 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
         if (response.error) {
           if (response.reason === "limit") {
             setIsLimit(true);
+            setIsGenerating(false);
           } else {
             alert("Failed to generate quiz. Server error")
+            setIsGenerating(false);
           }
 
         } else {
@@ -168,7 +171,9 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
 
     } catch (error) {
-      throw new Error("Error generating quiz" + error)
+      console.error("Error generating quiz:", error);
+      alert("Failed to generate quiz. Please try again.");
+      setIsGenerating(false);
     }
   }
 
