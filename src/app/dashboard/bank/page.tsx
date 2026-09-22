@@ -7,7 +7,6 @@ import QuestionBankGrid from "./_components/QuestionBankGrid";
 import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import BankLoading from "./loading";
 
 interface QuestionBankPageProps {
     searchParams: Promise<{ page?: string; search?: string; type?: string; }>;

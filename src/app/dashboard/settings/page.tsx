@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import NavBar from "@/app/_components/NavBar";
 import SettingsClient from "./_components/SettingsClient";
 import { getUser } from "@/app/actions";
@@ -12,6 +11,7 @@ interface SettingsPageProps {
 }
 
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+
     const resolvedTab = (await searchParams).tab || "account";
     const supabase = await createClient();
     const { data: { user: authUser } } = await supabase.auth.getUser();
