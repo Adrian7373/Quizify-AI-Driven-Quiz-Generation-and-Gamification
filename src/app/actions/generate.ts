@@ -4,6 +4,14 @@ import { waitForDatabaseConnection } from "@/lib/prisma-connection";
 import { Question } from "../_components/QuizModal";
 
 const baseUrl = process.env.PYTHON_AI_URL || 'http://127.0.0.1:5000';
+const QUESTION_TYPES = ["MULTIPLE_CHOICE", "TRUE_FALSE", "IDENTIFICATION", "ESSAY"] as const;
+type QuestionType = typeof QUESTION_TYPES[number];
+
+function getQuestionType(value: FormDataEntryValue | null): QuestionType | null {
+    return typeof value === "string" && QUESTION_TYPES.includes(value as QuestionType)
+        ? value as QuestionType
+        : null;
+}
 
 function getErrorCode(error: unknown): string | undefined {
     if (typeof error !== "object" || error === null) return undefined
@@ -67,14 +75,18 @@ export default async function handleAnonymousGeneration(formData: FormData, visi
             return { error: "Failed to generate quiz", reason: "limit" }
         }
 
-        const quizType = formData.get("quizType") as string;
+        const quizType = getQuestionType(formData.get("quizType"));
         const questionCount = formData.get("questionCount") as string;
         const inputType = formData.get("inputType") as string;
         const difficulty = formData.get("difficulty") as string;
         const language = formData.get("language") as string;
 
+        if (!quizType) {
+            return { error: "Invalid question type", reason: "invalidInput" };
+        }
+
         const flaskFormData = new FormData();
-        flaskFormData.append("quizType", quizType ?? "Multiple Choice");
+        flaskFormData.append("quizType", quizType);
         flaskFormData.append("questionCount", questionCount ?? "10");
         flaskFormData.append("inputType", inputType ?? "Text");
         flaskFormData.append("difficulty", difficulty ?? "normal")
@@ -119,6 +131,10 @@ export default async function handleAnonymousGeneration(formData: FormData, visi
         }
 
         const quizData = await flaskRes.json();
+        quizData.questions = quizData.questions.map((question: Question) => ({
+            ...question,
+            questionType: quizType,
+        }));
 
         return { quizData }
     } catch (error) {
@@ -155,11 +171,15 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
 
         if (user?.aiCredits <= 0) return { error: "Failed to generate quiz. Not enough credits", reason: "credits" }
 
-        const quizType = formData.get("quizType") as string;
+        const quizType = getQuestionType(formData.get("quizType"));
         const questionCount = formData.get("questionCount") as string;
         const inputType = formData.get("inputType") as string;
         const difficulty = formData.get("difficulty") as string;
         const language = formData.get("language") as string;
+
+        if (!quizType) {
+            return { error: "Invalid question type", reason: "invalidInput" };
+        }
 
         const parsedCount = parseInt(questionCount, 10) || 10;
         const requiredCredits = Math.max(1, Math.ceil(parsedCount / 10));
@@ -172,7 +192,7 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         }
 
         const flaskFormData = new FormData();
-        flaskFormData.append("quizType", quizType ?? "Multiple Choice");
+        flaskFormData.append("quizType", quizType);
         flaskFormData.append("questionCount", questionCount ?? "10");
         flaskFormData.append("inputType", inputType ?? "Text");
         flaskFormData.append("difficulty", difficulty ?? "normal");
@@ -196,9 +216,15 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         });
 
         if (!flaskRes.ok) {
-            const errorPayload = await flaskRes.json();
-            console.error("FLASK REJECTED REQUEST:", errorPayload);
-            throw new Error(`Flask API Error: ${errorPayload.error}`);
+            const errorBody = await flaskRes.text();
+            let errorMessage = errorBody;
+            try {
+                errorMessage = JSON.parse(errorBody).error ?? errorBody;
+            } catch {
+                // Keep the raw response when Flask did not return JSON.
+            }
+            console.error("FLASK REJECTED REQUEST:", errorBody);
+            throw new Error(`Flask API Error: ${errorMessage}`);
         }
 
         try {
@@ -219,6 +245,10 @@ export async function handleAuthenticatedGeneration(formData: FormData, userId: 
         }
 
         const quizData = await flaskRes.json();
+        quizData.questions = quizData.questions.map((question: Question) => ({
+            ...question,
+            questionType: quizType,
+        }));
 
         try {
             const quiz = await prisma.quiz.create({
