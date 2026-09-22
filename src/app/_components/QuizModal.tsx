@@ -6,7 +6,7 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 import { CalendarClock, Check, CircleX, Copy, Edit, Save, Timer, Trash, Play, Users, Loader2, BookOpen, BrainCircuit } from 'lucide-react';
-import type { AppUser } from '../page';
+import type { AppUser, QuizType } from '../page';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { deleteQuiz, updateQuiz } from '../actions';
@@ -20,6 +20,7 @@ export interface Question {
     correctAnswer: string;
     explanation: string;
     timeLimitSeconds?: number | null;
+    questionType?: QuizType;
 }
 
 export interface QuizData {
