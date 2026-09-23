@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, BrainCircuit, Check, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, BrainCircuit, Check, RotateCcw, X, Volume2, VolumeX } from "lucide-react";
 
 interface FlashcardClientProps {
     quiz: { title: string; description: string };
@@ -12,9 +12,9 @@ interface FlashcardClientProps {
 // Helper function to scale font size based on text length
 const getFontSize = (text: string) => {
     if (!text) return "text-xl sm:text-2xl";
-    if (text.length > 200) return "text-base sm:text-lg"; // Very long text
-    if (text.length > 100) return "text-lg sm:text-xl";   // Medium-long text
-    return "text-2xl sm:text-3xl lg:text-4xl";            // Standard short text
+    if (text.length > 200) return "text-base sm:text-lg";
+    if (text.length > 100) return "text-lg sm:text-xl";
+    return "text-2xl sm:text-3xl lg:text-4xl";
 };
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -34,6 +34,9 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     const [isFlipped, setIsFlipped] = useState(false);
     const [masteredCount, setMasteredCount] = useState(0);
 
+    // --- Mute State ---
+    const [isMuted, setIsMuted] = useState(false);
+
     const totalQuestions = questions.length;
     const isFinished = queue.length === 0;
     const currentQuestion = queue[0];
@@ -41,15 +44,14 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     // --- Audio Engine ---
     const successSound = useRef<HTMLAudioElement | null>(null);
 
-    // Initialize audio only on the client side to avoid SSR crashes
     useEffect(() => {
         successSound.current = new Audio('/sounds/success.mp3');
-        successSound.current.volume = 0.6; // Satisfying, not deafening
+        successSound.current.volume = 0.6;
     }, []);
 
     const playSuccessSound = () => {
-        if (successSound.current) {
-            // Reset to 0 allows rapid-fire clicking without dropping audio
+        // Only play if not muted
+        if (successSound.current && !isMuted) {
             successSound.current.currentTime = 0;
             successSound.current.play().catch((err) => {
                 console.log("Browser prevented audio autoplay:", err);
@@ -61,19 +63,18 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     const handleFlip = () => setIsFlipped(prev => !prev);
 
     const handleGotIt = useCallback(() => {
-        playSuccessSound(); // Trigger dopamine hit
+        playSuccessSound();
 
         setIsFlipped(false);
         setTimeout(() => {
-            setQueue(prev => prev.slice(1)); // Remove from queue
+            setQueue(prev => prev.slice(1));
             setMasteredCount(prev => prev + 1);
-        }, 150); // Slight delay allows the card to un-flip before changing text
-    }, []);
+        }, 150);
+    }, [isMuted]); // Added isMuted to dependency array so the callback knows the current state
 
     const handleReviewLater = useCallback(() => {
         setIsFlipped(false);
         setTimeout(() => {
-            // Take the current question and move it to the very back of the array
             setQueue(prev => {
                 const newQueue = [...prev];
                 const movedItem = newQueue.shift();
@@ -101,6 +102,8 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
                 handleGotIt();
             } else if (e.code === "ArrowLeft") {
                 handleReviewLater();
+            } else if (e.code === "KeyM") { // Bonus shortcut: Press 'M' to mute!
+                setIsMuted(prev => !prev);
             }
         };
 
@@ -143,9 +146,21 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
                     <button onClick={() => router.back()} className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 font-semibold text-sm sm:text-base">
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> Leave
                     </button>
-                    <span className="text-slate-400 font-bold text-xs sm:text-sm bg-slate-800 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full">
-                        {masteredCount} / {totalQuestions} Mastered
-                    </span>
+
+                    {/* Controls Container */}
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        <button
+                            onClick={() => setIsMuted(!isMuted)}
+                            className="text-slate-400 hover:text-white transition-colors p-1"
+                            title="Mute sound (M)"
+                        >
+                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </button>
+
+                        <span className="text-slate-400 font-bold text-xs sm:text-sm bg-slate-800 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full">
+                            {masteredCount} / {totalQuestions} Mastered
+                        </span>
+                    </div>
                 </div>
 
                 <div className="w-full bg-slate-800 rounded-full h-2 sm:h-2.5 overflow-hidden">
@@ -161,7 +176,7 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
 
                 {/* Keyboard hints for desktop */}
                 <div className="absolute top-0 w-full text-center text-slate-500 font-medium text-sm hidden md:block">
-                    Tip: Use <kbd className="bg-slate-800 px-2 py-1 rounded text-slate-300 mx-1">Space</kbd> to flip, and <kbd className="bg-slate-800 px-2 py-1 rounded text-slate-300 mx-1">Arrows</kbd> to sort.
+                    Tip: Use <kbd className="bg-slate-800 px-2 py-1 rounded text-slate-300 mx-1">Space</kbd> to flip, <kbd className="bg-slate-800 px-2 py-1 rounded text-slate-300 mx-1">Arrows</kbd> to sort, and <kbd className="bg-slate-800 px-2 py-1 rounded text-slate-300 mx-1">M</kbd> to mute.
                 </div>
 
                 <div
