@@ -10,6 +10,6 @@
   --color-white: #F8F9FA;
   --color-mint: #4ce0a3;
 
-  --font-inter: var(--font-inter);
-  --font-orbitron: var(--font-orbitron);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-orbitron: var(--font-orbitron), ui-sans-serif, system-ui, sans-serif;
 }

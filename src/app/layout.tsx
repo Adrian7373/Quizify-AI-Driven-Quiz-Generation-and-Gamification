@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${orbitron.variable} ${inter.variable}`}>
-      <body>{children}<Toaster position="bottom-right" reverseOrder={false} /></body>
+      <body className="font-sans">{children}<Toaster position="bottom-right" reverseOrder={false} /></body>
     </html>
   );
 }
