@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, BrainCircuit, Check, RotateCcw, X } from "lucide-react";
 
@@ -38,11 +38,31 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     const isFinished = queue.length === 0;
     const currentQuestion = queue[0];
 
-    // --- Actions ---
+    // --- Audio Engine ---
+    const successSound = useRef<HTMLAudioElement | null>(null);
 
+    // Initialize audio only on the client side to avoid SSR crashes
+    useEffect(() => {
+        successSound.current = new Audio('/sounds/success.mp3');
+        successSound.current.volume = 0.6; // Satisfying, not deafening
+    }, []);
+
+    const playSuccessSound = () => {
+        if (successSound.current) {
+            // Reset to 0 allows rapid-fire clicking without dropping audio
+            successSound.current.currentTime = 0;
+            successSound.current.play().catch((err) => {
+                console.log("Browser prevented audio autoplay:", err);
+            });
+        }
+    };
+
+    // --- Actions ---
     const handleFlip = () => setIsFlipped(prev => !prev);
 
     const handleGotIt = useCallback(() => {
+        playSuccessSound(); // Trigger dopamine hit
+
         setIsFlipped(false);
         setTimeout(() => {
             setQueue(prev => prev.slice(1)); // Remove from queue
@@ -87,7 +107,6 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [isFinished, handleGotIt, handleReviewLater]);
-
 
     // --- Finished State ---
     if (isFinished) {
