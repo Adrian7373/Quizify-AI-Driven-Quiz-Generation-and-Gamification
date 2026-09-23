@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, BrainCircuit, Check, RotateCcw, X } from "lucide-react";
-import Link from "next/link";
 
 interface FlashcardClientProps {
     quiz: { title: string; description: string };
@@ -18,11 +17,20 @@ const getFontSize = (text: string) => {
     return "text-2xl sm:text-3xl lg:text-4xl";            // Standard short text
 };
 
+const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+};
+
 export default function FlashcardClient({ quiz, questions }: FlashcardClientProps) {
     const router = useRouter();
 
     // The Active Queue: Starts with all questions.
-    const [queue, setQueue] = useState([...questions]);
+    const [queue, setQueue] = useState(() => shuffleArray(questions));
     const [isFlipped, setIsFlipped] = useState(false);
     const [masteredCount, setMasteredCount] = useState(0);
 
@@ -56,7 +64,7 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     }, []);
 
     const handleRestart = () => {
-        setQueue([...questions]);
+        setQueue(shuffleArray(questions));
         setMasteredCount(0);
         setIsFlipped(false);
     };
