@@ -1,17 +1,18 @@
 "use client"
-import FileDropzone from "./FileDropZone";
-import ImageUploadZone from "./ImageUploadZone";
 import { useEffect, useState } from "react";
 import QuizTypeSelector from "./QuestionTypeSelector";
-import QuizModal from "./QuizModal";
-import NavBar from "./NavBar";
 import handleAnonymousGeneration from "../actions/generate";
 import fpPromise from '@fingerprintjs/fingerprintjs'
-import SignupModal from "./SignUpModal";
 import { handleAuthenticatedGeneration } from "../actions/generate";
 import type { AppUser, InputOption, QuizData, QuizType, DifficultyType } from "../page";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
+const SignupModal = dynamic(() => import('./SignUpModal'), { ssr: false });
+const FileDropzone = dynamic(() => import('./FileDropZone'), { ssr: false });
+const ImageUploadZone = dynamic(() => import('./ImageUploadZone'), { ssr: false });
+const QuizModal = dynamic(() => import('./QuizModal'), { ssr: false });
+
 
 interface HomeClientProps {
   initialUser: AppUser | null;
@@ -232,21 +233,16 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
   return (
     <>
-      <NavBar user={user} onOpenLocalQuiz={handleOpenLocalQuiz} activeQuizId={quizData?.id} />
       {isLimit && (
         <SignupModal onClose={hideModal} />
       )}
-      <div className="pt-20 bg-dark h-dvh flex flex-col box-border">
+      <div className="lg:pt-20 bg-dark h-dvh flex flex-col box-border">
 
         {/* VIEW SWAPPER: If quiz is open, show quiz. Otherwise, show generator. */}
         {quizData && isOpen ? (
           <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
         ) : (
           <section className="py-2 px-6 flex flex-col items-center flex-1 overflow-y-auto lg:flex-row lg:justify-center lg:gap-10 xl:gap-15">
-            <div className="py-7 text-white font-inter flex flex-col gap-2 lg:max-w-sm">
-              <h1 className="text-2xl text-center lg:text-4xl lg:text-left">Turn Any Text Into an Assessment in Seconds</h1>
-              <p className="text-md text-center lg:text-xl lg:font-light lg:text-left">Paste your source material, and Quizify instantly generates accurate, gamified multiple-choice questions.</p>
-            </div>
             <div className="flex flex-col items-center xl:w-lg">
               {/* The Segmented Control Container */}
               <div className="flex shrink-0 w-full max-w-sm rounded-full border border-slate-300 overflow-hidden bg-white font-inter">
