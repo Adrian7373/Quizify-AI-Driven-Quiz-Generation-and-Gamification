@@ -1,21 +1,23 @@
 "use client"
-import { CirclePoundSterling, CircleUserRound, Cog, CreditCard, Flame, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus, Settings, Sparkles } from "lucide-react";
+import { CircleUserRound, Cog, CreditCard, Flame, LayoutDashboard, LogOut, Menu, PanelRightClose, Plus, Settings, Sparkles } from "lucide-react";
 import Logo from "./Logo";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { AppUser } from "../page";
-import SignupModal from "./SignUpModal";
 import Link from "next/link";
 import { logOutUser } from "../actions";
 import toast from "react-hot-toast";
+import dynamic from "next/dynamic";
+const SignupModal = dynamic(() => import('./SignUpModal'), { ssr: false });
 
 interface NavBarProps {
     user: AppUser | null
     onOpenLocalQuiz?: (quiz: any) => void
     activeQuizId?: string | null
+    isFallback?: boolean;
 }
 
-export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarProps) {
+export default function NavBar({ user, onOpenLocalQuiz, activeQuizId, isFallback = false }: NavBarProps) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [isSigningIn, setIsSigningIn] = useState(false);
@@ -75,28 +77,29 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId }: NavBarPr
                 <Menu onClick={toggleMenu} strokeWidth={3} className="w-10 h-10 text-white cursor-pointer" />
                 <Logo />
             </div>
-            {user && (
-                <div className="flex items-center gap-4 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
-                    {/* Streak Indicator */}
-                    <div className="flex items-center gap-1 border-r border-slate-300 pr-3">
-                        <Flame
-                            className={`w-4 h-4 ${user.currentStreak > 0 ? "text-orange-500 fill-orange-500" : "text-slate-400"}`}
-                        />
-                        <span className={`text-sm font-bold ${user.currentStreak > 0 ? "text-orange-600" : "text-slate-500"}`}>
-                            {user.currentStreak}
-                        </span>
-                    </div>
 
-                    {/* AI Credits */}
+            {/* 3. HANDLE THE 3 STATES: Loading, Logged In, Logged Out */}
+            {isFallback ? (
+                // Loading Skeleton (Matches the shape of the Streak/Credits pill)
+                <div className="h-10 w-32 bg-slate-800 rounded-full animate-pulse border border-slate-700"></div>
+            ) : user ? (
+                // Logged In State
+                <div className="flex items-center gap-4 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                    <div className="flex items-center gap-1 border-r border-slate-300 pr-3">
+                        <Flame className={`w-4 h-4 ${user.currentStreak > 0 ? "text-orange-500 fill-orange-500" : "text-slate-400"}`} />
+                        <span className={`text-sm font-bold ${user.currentStreak > 0 ? "text-orange-600" : "text-slate-500"}`}>{user.currentStreak}</span>
+                    </div>
                     <div className="flex items-center gap-1.5">
                         <Sparkles className="w-4 h-4 text-[#4ce0a3] fill-[#4ce0a3]/20" />
-                        <Link href={`/dashboard/settings?tab=credits`} className="text-sm font-black text-slate-700">
-                            {user.aiCredits}
-                        </Link>
+                        <Link href={`/dashboard/settings?tab=credits`} className="text-sm font-black text-slate-700">{user.aiCredits}</Link>
                     </div>
                 </div>
+            ) : (
+                // Logged Out State
+                <button onClick={toggleSignIn} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">
+                    Sign In
+                </button>
             )}
-            <button onClick={toggleSignIn} hidden={!!user} className="bg-white px-4 py-2 rounded-md font-semibold cursor-pointer hover:bg-gray-300">Sign In</button>
 
             <div
                 onClick={toggleMenu}
