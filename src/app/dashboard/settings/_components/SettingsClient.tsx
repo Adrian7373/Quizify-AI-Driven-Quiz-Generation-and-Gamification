@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react";
-import { User, Shield, Bell, Sparkles, LogOut, Save } from "lucide-react";
+import { User, Shield, Bell, Sparkles, LogOut, Save, Cog } from "lucide-react";
 import { AppUser } from "@/app/page";
-import { updateAccountProfile } from "../actions";
+import { logOutUser, updateAccountProfile } from "../actions";
 import toast from "react-hot-toast";
 import { error } from "node:console";
+import { useRouter } from "next/navigation";
 
 export type Tab = "account" | "preferences" | "security" | "credits";
 type Role = "TEACHER" | "STUDENT";
@@ -16,14 +17,42 @@ interface SettingsClientProps {
 }
 
 export default function SettingsClient({ user, initialTab }: SettingsClientProps) {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "account");
     const [isSaving, setIsSaving] = useState(false);
+
+    // Loading state of logout
+    const [isPending, setIsPending] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     // Form states for the Account tab
     const [name, setName] = useState(user.name || "");
     const [role, setRole] = useState<Role>(user.role as Role || "TEACHER");
 
     const hasChanges = name !== (user.name || "") || role !== user.role;
+
+    const toggleLogout = () => {
+        setIsLoggingOut((prev) => !prev)
+    }
+
+    const handleLogOut = async () => {
+        setIsPending(true);
+
+        const response = await logOutUser();
+
+        if (response?.error) {
+            toast.error("Failed to logout user. Server error")
+            setIsPending(false);
+            setIsLoggingOut(false);
+            return;
+        }
+
+        // Success: close modal, stop pending, refresh server components
+        setIsPending(false);
+        setIsLoggingOut(false);
+        toast.success("Logged out")
+        router.refresh();
+    }
 
     const handleAccountSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -178,7 +207,7 @@ export default function SettingsClient({ user, initialTab }: SettingsClientProps
                                 <span className="text-indigo-600 font-semibold text-sm">Update</span>
                             </button>
 
-                            <button className="w-full flex items-center justify-between p-4 border-2 border-rose-100 bg-rose-50 rounded-xl hover:border-rose-200 transition-colors text-left group">
+                            <button onClick={toggleLogout} className="w-full flex items-center justify-between p-4 border-2 border-rose-100 bg-rose-50 rounded-xl hover:border-rose-200 transition-colors text-left group cursor-pointer">
                                 <div>
                                     <p className="font-bold text-rose-800">Sign Out</p>
                                     <p className="text-sm text-rose-600/80">Log out of this device</p>
@@ -213,6 +242,25 @@ export default function SettingsClient({ user, initialTab }: SettingsClientProps
                                 <p className="text-2xl font-black text-slate-800 mb-1">500</p>
                                 <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Credits</p>
                                 <button className="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg text-sm">₱500.00</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isLoggingOut && (
+                    <div onClick={toggleLogout} className='bg-black/50 z-50 fixed inset-0 flex h-dvh items-center justify-center'>
+                        <div onClick={(e) => e.stopPropagation()} className='z-[60] bg-white p-8 mx-4 max-w-sm w-full flex flex-col items-center gap-4 rounded-xl shadow-2xl'>
+                            <div className="flex flex-col items-center gap-2 text-center">
+                                <LogOut className='w-10 h-10 text-red-500' />
+                                <h2 className='text-2xl font-bold text-slate-800'>Log out?</h2>
+                                <p className="text-slate-500">Are you sure you want to log out of your account?</p>
+                            </div>
+                            <div className='flex gap-3 w-full mt-2'>
+                                <button onClick={toggleLogout} className='flex-1 bg-slate-100 text-slate-700 font-semibold py-3 rounded-lg hover:bg-slate-200 transition-colors'>Cancel</button>
+                                <button className='flex-1 bg-red-500 text-white font-semibold py-3 rounded-lg flex gap-2 justify-center items-center hover:bg-red-600 transition-colors' onClick={handleLogOut}>
+                                    {isPending ? <Cog className="animate-spin w-5 h-5" /> : null}
+                                    Confirm
+                                </button>
                             </div>
                         </div>
                     </div>
