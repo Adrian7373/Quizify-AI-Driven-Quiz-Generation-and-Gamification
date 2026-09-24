@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Quizify",
+  title: "QuizWarp",
   description: "Generate gamified, AI-driven quizzes instantly. A full-stack assessment platform designed for interactive learning between teachers and students.",
   icons: {
     icon: "/icon.svg"

@@ -7,10 +7,10 @@ import GeneratorSkeleton from "./_components/GeneratorSkeleton";
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Quizify | Turn Any Text Into an Assessment in Seconds',
-  description: 'Paste your source material, and Quizify instantly generates accurate, gamified multiple-choice questions using AI.',
+  title: 'QuizWarp | Turn Any Text Into an Assessment in Seconds',
+  description: 'Paste your source material, and QuizWarp instantly generates accurate, gamified multiple-choice questions using AI.',
   openGraph: {
-    title: 'Quizify AI',
+    title: 'QuizWarp',
     description: 'Instant AI Quiz Generation',
   }
 };
@@ -90,7 +90,7 @@ export default function Home() {
         {/* Static Hero Text (Loads Instantly alongside the fallbacks) */}
         <div className="py-7 text-white font-inter flex flex-col gap-2 lg:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
           <h1 className="text-2xl text-center lg:text-4xl lg:text-left">Turn Any Text Into an Assessment in Seconds</h1>
-          <p className="text-md text-center lg:text-xl lg:font-light lg:text-left text-slate-300">Paste your source material, and Quizify instantly generates accurate, gamified multiple-choice questions.</p>
+          <p className="text-md text-center lg:text-xl lg:font-light lg:text-left text-slate-300">Paste your source material, and QuizWarp instantly generates accurate, gamified multiple-choice questions.</p>
         </div>
 
         {/* Instantly shows the GeneratorSkeleton. Swaps to GeneratorWrapper when ready. */}

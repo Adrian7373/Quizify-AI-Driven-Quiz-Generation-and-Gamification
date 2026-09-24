@@ -9,7 +9,7 @@ export default function Logo() {
                 <Brain className="w-10 h-10 text-white" />
             </div>
             <p className="font-orbitron text-white">
-                Quizify
+                QuizWarp
             </p>
         </div>
     )
