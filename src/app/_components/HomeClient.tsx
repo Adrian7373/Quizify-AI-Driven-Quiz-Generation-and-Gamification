@@ -226,10 +226,19 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
     setIsLimit(false);
   }
 
-  const handleOpenLocalQuiz = (localQuiz: QuizData) => {
-    setQuizData(localQuiz);
-    setIsOpen(true);
-  }
+  // Listen for local quiz clicks
+  useEffect(() => {
+    const handleOpenQuiz = (e: Event) => {
+      const customEvent = e as CustomEvent<QuizData>;
+      setQuizData(customEvent.detail);
+      setIsOpen(true);
+    };
+
+    window.addEventListener('openLocalQuiz', handleOpenQuiz);
+
+    // Cleanup the listener when the component unmounts
+    return () => window.removeEventListener('openLocalQuiz', handleOpenQuiz);
+  }, []);
 
   return (
     <>
@@ -239,7 +248,7 @@ export default function HomeClient({ initialUser }: HomeClientProps) {
 
       {/* VIEW SWAPPER: If quiz is open, show quiz. Otherwise, show generator. */}
       {quizData && isOpen ? (
-        <QuizModal quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
+        <QuizModal key={quizData.id} quizData={quizData} onClose={handleCloseModal} isOpen={isOpen} user={user} />
       ) : (
         <div className="flex flex-col items-center w-full max-w-sm xl:w-lg mt-4 lg:mt-0">
           {/* The Segmented Control Container */}
