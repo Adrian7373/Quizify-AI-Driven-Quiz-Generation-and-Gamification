@@ -41,16 +41,41 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     const isFinished = queue.length === 0;
     const currentQuestion = queue[0];
 
-    // --- Audio Engine ---
     const successSound = useRef<HTMLAudioElement | null>(null);
+    const bgMusic = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
+        // Init Success Sound
         successSound.current = new Audio('/sounds/success.mp3');
         successSound.current.volume = 0.6;
+
+        // Init Background Music
+        bgMusic.current = new Audio('/sounds/bgmusic1.mp3');
+        bgMusic.current.volume = 0.15; // Keep it soft so it sits in the background
+        bgMusic.current.loop = true;
+
+        // Cleanup: Stop music when user leaves the flashcard page
+        return () => {
+            if (bgMusic.current) {
+                bgMusic.current.pause();
+                bgMusic.current.src = "";
+            }
+        };
     }, []);
 
+    // React to the Mute Button and Finished state
+    useEffect(() => {
+        if (!bgMusic.current) return;
+
+        if (isMuted || isFinished) {
+            bgMusic.current.pause();
+        } else {
+            // Try to play. If browser blocks it due to lack of interaction, catch the error silently.
+            bgMusic.current.play().catch(() => console.log("Waiting for user interaction to play BGM"));
+        }
+    }, [isMuted, isFinished]);
+
     const playSuccessSound = () => {
-        // Only play if not muted
         if (successSound.current && !isMuted) {
             successSound.current.currentTime = 0;
             successSound.current.play().catch((err) => {
@@ -60,7 +85,14 @@ export default function FlashcardClient({ quiz, questions }: FlashcardClientProp
     };
 
     // --- Actions ---
-    const handleFlip = () => setIsFlipped(prev => !prev);
+    const handleFlip = () => {
+        setIsFlipped(prev => !prev);
+
+        // If the browser blocked autoplay on page load, start it on their first click
+        if (bgMusic.current && bgMusic.current.paused && !isMuted && !isFinished) {
+            bgMusic.current.play().catch(() => { });
+        }
+    };
 
     const handleGotIt = useCallback(() => {
         playSuccessSound();
