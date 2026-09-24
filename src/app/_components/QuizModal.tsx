@@ -403,7 +403,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
     };
 
     return (
-        <div className="w-full h-[calc(100vh-80px)] print:h-auto flex flex-col print:block bg-slate-50 font-sans overflow-hidden print:overflow-visible">
+        <div className="w-dvw absolute mt-17 inset-0 h-[calc(100vh-80px)] print:h-auto flex flex-col print:block bg-slate-50 font-sans overflow-hidden print:overflow-visible">
             <header className="print:hidden z-40 flex px-3 sm:px-4 py-3 sm:py-4 bg-darker border-b border-slate-200 shadow-sm shrink-0 relative min-h-[72px]">
 
                 {/* Action Container: flex-wrap with uniform gap, pr-12 ensures buttons don't overlap the absolute close button on mobile */}
@@ -513,7 +513,7 @@ export default function QuizModal({ isOpen, onClose, quizData, user }: QuizModal
                 </div>
 
                 {/* Close Button - absolute top right on mobile, normal flex item on desktop */}
-                <button onClick={handleClose} className="absolute right-3 top-3 sm:static sm:ml-2 flex items-center justify-center w-10 h-10 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-colors print:hidden shrink-0">
+                <button onClick={handleClose} className="absolute right-5 top-3 sm:static sm:ml-2 flex items-center justify-center w-10 h-10 text-slate-400 hover:text-white bg-slate-800 rounded-full transition-colors print:hidden shrink-0">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-6 sm:h-6"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </header>
