@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { submitAnswer, getParticipantProgress } from "../actions";
 import { cleanupPracticeSession } from "@/app/actions";
-import { Loader2, Flame, Trophy, LogOut } from "lucide-react";
+import { Loader2, Flame, Trophy, LogOut, VolumeX, Volume2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { submitAndGradeEssay } from "@/app/actions";
 
@@ -20,6 +20,7 @@ const getFontSize = (text: string) => {
     if (text.length > 120) return "text-lg md:text-xl";
     return "text-2xl md:text-3xl";
 };
+
 
 export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPlayerProps) {
     const router = useRouter();
@@ -38,11 +39,35 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
     const [streak, setStreak] = useState(0);
     const [isFinished, setIsFinished] = useState(false);
 
+    // --- Mute State ---
+    const [isMuted, setIsMuted] = useState(false);
+
     // Question Interaction State
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
     const [textAnswer, setTextAnswer] = useState<string>("");
     const [isRevealed, setIsRevealed] = useState(false);
     const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+
+    const successSound = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        successSound.current = new Audio('/sounds/success.mp3');
+        successSound.current.volume = 0.6;
+    }, []);
+
+    const playSuccessSound = () => {
+        // Only play if not muted
+        if (successSound.current && !isMuted) {
+            successSound.current.currentTime = 0;
+            successSound.current.play().catch((err) => {
+                console.log("Browser prevented audio autoplay:", err);
+            });
+        }
+    };
+
+    const handleGotIt = useCallback(() => {
+        playSuccessSound();
+    }, [isMuted]);
 
     useEffect(() => {
         async function initPlayer() {
@@ -133,8 +158,10 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
         } else {
             if (currentQuestion.questionType === "IDENTIFICATION") {
                 isCorrect = answer.trim().toLowerCase() === currentQuestion.correctAnswer.trim().toLowerCase();
+                if (isCorrect) handleGotIt()
             } else {
                 isCorrect = answer === currentQuestion.correctAnswer;
+                if (isCorrect) handleGotIt()
             }
 
             const response = await submitAnswer(
@@ -246,6 +273,13 @@ export default function AsyncPlayer({ sessionId, quizTitle, questions }: AsyncPl
                         </div>
                     )}
                     <div className="bg-slate-800 px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold flex items-center gap-2 text-sm md:text-base">
+                        <button
+                            onClick={() => setIsMuted(!isMuted)}
+                            className="text-slate-400 hover:text-white transition-colors p-1"
+                            title="Mute sound (M)"
+                        >
+                            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                        </button>
                         Score: <span className="text-[#4ce0a3]">{score}</span>
                     </div>
                 </div>
