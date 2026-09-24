@@ -1,8 +1,19 @@
 "use server"
 import prisma from "@/lib/prisma";
+import { getErrorCode, waitForDatabaseConnection } from "@/lib/prisma-connection";
 
 export async function joinGameSession(pin: string, nickname: string) {
     try {
+
+        try {
+            await waitForDatabaseConnection();
+        } catch (usageError) {
+            console.error("Database connection not ready.", {
+                code: getErrorCode(usageError) ?? "UNKNOWN",
+            })
+            return { error: "Failed to join game", reason: "serverError" }
+        }
+
         const session = await prisma.gameSession.findFirst({
             where: {
                 joinCode: pin,
