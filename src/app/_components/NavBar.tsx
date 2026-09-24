@@ -12,12 +12,11 @@ const SignupModal = dynamic(() => import('./SignUpModal'), { ssr: false });
 
 interface NavBarProps {
     user: AppUser | null
-    onOpenLocalQuiz?: (quiz: any) => void
     activeQuizId?: string | null
     isFallback?: boolean;
 }
 
-export default function NavBar({ user, onOpenLocalQuiz, activeQuizId, isFallback = false }: NavBarProps) {
+export default function NavBar({ user, activeQuizId, isFallback = false }: NavBarProps) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const [isSigningIn, setIsSigningIn] = useState(false);
@@ -155,7 +154,8 @@ export default function NavBar({ user, onOpenLocalQuiz, activeQuizId, isFallback
                                                 key={quiz.id}
                                                 onClick={() => {
                                                     toggleMenu();
-                                                    if (onOpenLocalQuiz) onOpenLocalQuiz(quiz);
+                                                    // Dispatch a custom browser event containing the quiz payload
+                                                    window.dispatchEvent(new CustomEvent('openLocalQuiz', { detail: quiz }));
                                                 }}
                                                 className={`flex items-center text-left w-full px-3 py-2.5 text-sm rounded-md transition-all group cursor-pointer border-l-4 shrink-0 ${isActive
                                                     ? 'bg-[#4ce0a3]/10 text-[#4ce0a3] border-[#4ce0a3] font-medium'
